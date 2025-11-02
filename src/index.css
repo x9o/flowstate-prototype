@@ -80,7 +80,9 @@ All colors MUST be HSL.
 
   body {
     @apply bg-gradient-to-b from-[#F7F8FB] to-white text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: 'TikTok Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    font-variation-settings: "slnt" 0, "wdth" 100;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
