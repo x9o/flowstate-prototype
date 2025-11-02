@@ -1,8 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
 
@@ -66,24 +67,292 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 220 20% 97%;
-    --foreground: 220 15% 20%;
+    /* Dark purple theme */
+    --background: 250 20% 8%;
+    --foreground: 250 10% 95%;
+
+    --card: 250 20% 12%;
+    --card-foreground: 250 10% 95%;
+
+    --popover: 250 20% 12%;
+    --popover-foreground: 250 10% 95%;
+
+    --primary: 250 84% 67%;
+    --primary-foreground: 250 20% 8%;
+
+    --secondary: 250 20% 16%;
+    --secondary-foreground: 250 10% 95%;
+
+    --muted: 250 20% 16%;
+    --muted-foreground: 250 10% 65%;
+
+    --accent: 280 84% 67%;
+    --accent-foreground: 250 10% 95%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 250 10% 95%;
+
+    --border: 250 20% 18%;
+    --input: 250 20% 16%;
+    --ring: 250 84% 67%;
+
+    /* Dark mode custom tokens */
+    --mint: 158 64% 52%;
+    --indigo: 250 84% 67%;
+    --peach: 0 90% 80%;
+    --sky: 199 89% 68%;
+    --lavender: 280 75% 83%;
+
+    --shadow-soft: 0px 4px 30px rgba(139, 92, 246, 0.1);
+    --transition-smooth: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 250 20% 8%;
+    --sidebar-foreground: 250 10% 95%;
+    --sidebar-primary: 250 84% 67%;
+    --sidebar-primary-foreground: 250 20% 8%;
+    --sidebar-accent: 250 20% 16%;
+    --sidebar-accent-foreground: 250 10% 95%;
+    --sidebar-border: 250 20% 18%;
+    --sidebar-ring: 250 84% 67%;
   }
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   * {
     @apply border-border;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection for input elements */
+  input, textarea, select, [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+  /* Allow user interaction for dropdown menus */
+  [data-radix-dropdown-menu-item], [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"],
+  [data-radix-dropdown-menu-trigger], [data-radix-dropdown-menu-content] {
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    -ms-user-select: auto;
+    user-select: auto;
+    pointer-events: auto !important;
+  }
+
+  /* Allow text selection for specific interactive elements */
+  button:focus, button:active {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 
   body {
-    @apply bg-gradient-to-b from-[#F7F8FB] to-white text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-family: 'TikTok Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     font-optical-sizing: auto;
     font-variation-settings: "slnt" 0, "wdth" 100;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Dark theme gradient background - override inline styles */
+  html.dark body,
+  body.dark {
+    background: linear-gradient(to bottom, hsl(250 20% 8%), hsl(250 15% 12%)) !important;
+  }
+
+  /* Ensure theme transition */
+  html,
+  body,
+  body > div,
+  main,
+  .bg-white,
+  .bg-background {
+    transition: background-color 300ms ease, color 300ms ease;
+  }
+
+  /* Force dark mode background for all containers in dark mode */
+  html.dark .bg-white,
+  body.dark .bg-white {
+    background-color: hsl(250 20% 12%) !important;
+  }
+
+  html.dark [class*="bg-white"],
+  body.dark [class*="bg-white"] {
+    background-color: hsl(250 20% 12%) !important;
+  }
+
+  /* Force dark mode for all background containers */
+  html.dark .bg-background,
+  body.dark .bg-background {
+    background-color: hsl(250 20% 8%) !important;
+  }
+
+  html.dark .bg-card,
+  body.dark .bg-card {
+    background-color: hsl(250 20% 12%) !important;
+  }
+
+  /* Apply dark theme to all major containers */
+  html.dark #root,
+  body.dark #root {
+    background-color: hsl(250 20% 8%) !important;
+    min-height: 100vh;
+  }
+
+  /* Comprehensive dark mode overrides */
+  html.dark *,
+  body.dark * {
+    border-color: hsl(250 20% 18%) !important;
+  }
+
+  /* Ensure all text colors are proper in dark mode */
+  html.dark .text-gray-500,
+  body.dark .text-gray-500,
+  html.dark .text-gray-600,
+  body.dark .text-gray-600,
+  html.dark .text-gray-700,
+  body.dark .text-gray-700 {
+    color: hsl(250 10% 75%) !important;
+  }
+
+  html.dark .text-gray-800,
+  body.dark .text-gray-800,
+  html.dark .text-gray-900,
+  body.dark .text-gray-900 {
+    color: hsl(250 10% 95%) !important;
+  }
+
+  /* Override any remaining white backgrounds */
+  html.dark [style*="background: white"],
+  body.dark [style*="background: white"],
+  html.dark [style*="background-color: white"],
+  body.dark [style*="background-color: white"],
+  html.dark [style*="background: #ffffff"],
+  body.dark [style*="background: #ffffff"] {
+    background-color: hsl(250 20% 12%) !important;
+  }
+
+  /* Hide scrollbars for all elements */
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* WebKit browsers */
+  }
+
+  /* Alternative scrollbar hiding for cross-browser compatibility */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+
+  /* Additional responsive utilities */
+  .responsive-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ensure proper scaling on very small screens */
+  @media (max-width: 320px) {
+    html {
+      font-size: 14px;
+    }
+  }
+
+  /* Medium screens */
+  @media (min-width: 321px) and (max-width: 640px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  /* Large screens */
+  @media (min-width: 1280px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  /* Extra large screens */
+  @media (min-width: 1536px) {
+    .max-w-screen-2xl {
+      max-width: 1400px;
+    }
+  }
+
+  /* Custom responsive improvements for Electron */
+  .electron-window {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* Ensure proper scaling in small windows */
+  @media (max-width: 768px) {
+    .min-h-screen {
+      min-height: 100vh;
+      min-height: 100dvh; /* Dynamic viewport height for mobile */
+    }
+  }
+
+  /* Force proper container scaling */
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .responsive-grid {
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .responsive-grid {
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 1.5rem;
+    }
+  }
+
+  /* Ensure no horizontal overflow */
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* Compact mode for very small windows */
+  @media (max-height: 600px) {
+    .compact-mode {
+      padding: 0.5rem !important;
+    }
+
+    .compact-mode h1 {
+      font-size: 1.25rem !important;
+    }
+
+    .compact-mode h2 {
+      font-size: 1.125rem !important;
+    }
   }
 }

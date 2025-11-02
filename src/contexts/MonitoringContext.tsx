@@ -1,0 +1,145 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { MonitoringState, WindowInfo, ActivityBlockedEvent, MonitoringErrorEvent } from '../types/monitoring';
+
+interface MonitoringContextType {
+  monitoringState: MonitoringState;
+  startMonitoring: (goals: string[], duration: number) => Promise<void>;
+  stopMonitoring: () => Promise<void>;
+  getMonitoringStatus: () => Promise<MonitoringState>;
+}
+
+const MonitoringContext = createContext<MonitoringContextType | undefined>(undefined);
+
+interface MonitoringProviderProps {
+  children: ReactNode;
+}
+
+export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children }) => {
+  const [monitoringState, setMonitoringState] = useState<MonitoringState>({
+    isActive: false,
+    currentGoals: [],
+    sessionStats: {
+      totalChecks: 0,
+      blockedAttempts: 0,
+      sessionStartTime: null,
+      currentWindow: null
+    },
+    sessionDuration: 0
+  });
+
+  // Start monitoring session
+  const startMonitoring = async (goals: string[], duration: number): Promise<void> => {
+    try {
+      const result = await window.electronAPI.startMonitoring(goals, duration);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to start monitoring');
+      }
+    } catch (error) {
+      console.error('Error starting monitoring:', error);
+      throw error;
+    }
+  };
+
+  // Stop monitoring session
+  const stopMonitoring = async (): Promise<void> => {
+    try {
+      const result = await window.electronAPI.stopMonitoring();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to stop monitoring');
+      }
+    } catch (error) {
+      console.error('Error stopping monitoring:', error);
+      throw error;
+    }
+  };
+
+  // Get current monitoring status
+  const getMonitoringStatus = async (): Promise<MonitoringState> => {
+    try {
+      const status = await window.electronAPI.getMonitoringStatus();
+      return status;
+    } catch (error) {
+      console.error('Error getting monitoring status:', error);
+      return monitoringState;
+    }
+  };
+
+  // Set up event listeners for monitoring events
+  useEffect(() => {
+    // Listen for monitoring status changes
+    const handleStatusChange = (_event: any, data: any) => {
+      console.log('Monitoring status changed:', data);
+      setMonitoringState(prev => ({
+        ...prev,
+        isActive: data.isActive,
+        currentGoals: data.goals || [],
+        sessionStats: data.sessionStats || prev.sessionStats
+      }));
+    };
+
+    // Listen for window detection events
+    const handleWindowDetected = (_event: any, data: WindowInfo) => {
+      console.log('Window detected:', data);
+      setMonitoringState(prev => ({
+        ...prev,
+        sessionStats: {
+          ...prev.sessionStats,
+          currentWindow: data
+        }
+      }));
+    };
+
+    // Listen for activity blocked events
+    const handleActivityBlocked = (_event: any, data: ActivityBlockedEvent) => {
+      console.log('Activity blocked:', data);
+      setMonitoringState(prev => ({
+        ...prev,
+        sessionStats: {
+          ...prev.sessionStats,
+          blockedAttempts: prev.sessionStats.blockedAttempts + 1
+        }
+      }));
+    };
+
+    // Listen for monitoring errors
+    const handleMonitoringError = (_event: any, data: MonitoringErrorEvent) => {
+      console.error('Monitoring error:', data);
+      // Could show error toast here
+    };
+
+    // Register event listeners
+    window.electronAPI.onMonitoringStatusChange(handleStatusChange);
+    window.electronAPI.onWindowDetected(handleWindowDetected);
+    window.electronAPI.onActivityBlocked(handleActivityBlocked);
+    window.electronAPI.onMonitoringError(handleMonitoringError);
+
+    // Cleanup function
+    return () => {
+      window.electronAPI.removeAllListeners('monitoring-status-change');
+      window.electronAPI.removeAllListeners('window-detected');
+      window.electronAPI.removeAllListeners('activity-blocked');
+      window.electronAPI.removeAllListeners('monitoring-error');
+    };
+  }, []);
+
+  const value: MonitoringContextType = {
+    monitoringState,
+    startMonitoring,
+    stopMonitoring,
+    getMonitoringStatus
+  };
+
+  return (
+    <MonitoringContext.Provider value={value}>
+      {children}
+    </MonitoringContext.Provider>
+  );
+};
+
+export const useMonitoring = (): MonitoringContextType => {
+  const context = useContext(MonitoringContext);
+  if (context === undefined) {
+    throw new Error('useMonitoring must be used within a MonitoringProvider');
+  }
+  return context;
+};

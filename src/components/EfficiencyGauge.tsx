@@ -7,7 +7,7 @@ export const EfficiencyGauge = ({ percentage }: EfficiencyGaugeProps) => {
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="relative w-64 h-64 mx-auto">
+    <div className="relative w-full max-w-xs mx-auto aspect-square">
       <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
         {/* Background ring */}
         <circle
@@ -18,7 +18,7 @@ export const EfficiencyGauge = ({ percentage }: EfficiencyGaugeProps) => {
           stroke="hsl(var(--mint) / 0.1)"
           strokeWidth="20"
         />
-        
+
         {/* Progress ring with gradient */}
         <defs>
           <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -29,7 +29,7 @@ export const EfficiencyGauge = ({ percentage }: EfficiencyGaugeProps) => {
             <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="hsl(var(--mint))" floodOpacity="0.3"/>
           </filter>
         </defs>
-        
+
         <circle
           cx="100"
           cy="100"
@@ -47,8 +47,8 @@ export const EfficiencyGauge = ({ percentage }: EfficiencyGaugeProps) => {
 
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-6xl font-bold text-foreground">{percentage}%</div>
-        <div className="text-sm text-muted-foreground mt-1">of tasks completed</div>
+        <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground">{percentage}%</div>
+        <div className="text-xs sm:text-sm text-muted-foreground mt-1 text-center px-2">of tasks completed</div>
       </div>
     </div>
   );
