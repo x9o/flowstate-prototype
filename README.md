@@ -63,6 +63,7 @@ FlowState helps users enter and maintain a **"flow state"** — a period of deep
 - [x] **Context-Aware Blocking** — Understands user goals vs current activity
 - [x] **Multi-Task Support** — AI considers all enabled tasks when making decisions
 - [ ] **AI Modes** — "Strict", "Balanced", "Lenient" sensitivity levels
+- [ ] **Task Validation** - Ask user/auto generate more details when given ambigious tasks. 
 
 ### **User Interface**
 - [x] **Responsive Design** — Mobile-first design that scales to desktop
