@@ -88,6 +88,7 @@ FlowState helps users enter and maintain a **"flow state"** — a period of deep
 - [x] **App Branding** — Custom icon and window title ("FlowState")
 - [ ] **Keyboard Shortcuts** — Start/stop session quickly
 - [ ] **Smart Notifications** — Alerts for distractions or milestones
+- [ ] **Non intrusive block screen** - With a quote or breath reminder, and replace the harsh red screen.
 
 ---
 
