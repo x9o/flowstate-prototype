@@ -1,9 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { MonitoringState, WindowInfo, ActivityBlockedEvent, MonitoringErrorEvent } from '../types/monitoring';
 
+interface ListItem {
+  id: string;
+  name: string;
+  type: 'app' | 'website';
+  pattern: string;
+  icon?: string;
+}
+
 interface MonitoringContextType {
   monitoringState: MonitoringState;
-  startMonitoring: (goals: string[], duration: number) => Promise<void>;
+  startMonitoring: (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]) => Promise<void>;
   stopMonitoring: () => Promise<void>;
   getMonitoringStatus: () => Promise<MonitoringState>;
 }
@@ -28,9 +36,9 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
   });
 
   // Start monitoring session
-  const startMonitoring = async (goals: string[], duration: number): Promise<void> => {
+  const startMonitoring = async (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]): Promise<void> => {
     try {
-      const result = await window.electronAPI.startMonitoring(goals, duration);
+      const result = await window.electronAPI.startMonitoring(goals, duration, whitelist, blocklist);
       if (!result.success) {
         throw new Error(result.error || 'Failed to start monitoring');
       }

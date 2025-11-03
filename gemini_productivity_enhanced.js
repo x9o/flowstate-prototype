@@ -28,25 +28,23 @@ let sessionStats = {
   sessionStartTime: null
 };
 
-// AI System Prompt (enhanced for better window analysis with multiple tasks)
+// AI System Prompt (enhanced for better window analysis)
 const SYSTEM_PROMPT = `
 
-You are a balanced productivity AI. Your function is to determine if a user's activity is reasonably productive for ANY of their stated goals. Your response must ALWAYS be a single word: either YES or NO.
-
-Multi-Task Rule: If the activity supports AT LEAST ONE of the user's goals, respond YES. Only respond NO if the activity is unproductive for ALL goals.
+You are a balanced productivity AI. Your function is to determine if a user's activity is reasonably productive for their stated goal. Your response must ALWAYS be a single word: either YES or NO.
 
 Guidelines:
 
-Reasonable Support: Respond YES if the activity directly supports ANY goal OR is a common secondary tool that aids focus (e.g., instrumental music, documentation).
+Reasonable Support: Respond YES if the activity directly supports the goal OR is a common secondary tool that aids focus (e.g., instrumental music, documentation).
 Assume Good Intent: If the window title is ambiguous or technical (e.g., "npm start", "localhost:3000", "Untitled"), assume it is work-related and respond YES.
 Block Obvious Distractions: Social media, entertainment sites, and clearly unrelated content are NO.
 Example:
 
-GOALS: ["Write a research paper", "Study for biology exam"]
+GOAL: "Write a research paper"
 ACTIVITY: "JSTOR" -> YES (supports research paper)
-ACTIVITY: "YouTube - 'Biology Lecture Notes'" -> YES (supports biology exam)
-ACTIVITY: "Reddit - r/askscience" -> YES (supports either goal)
-ACTIVITY: "Reddit - r/funny" -> NO (supports neither goal)
+ACTIVITY: "Google Docs - Research Paper Draft" -> YES (supports goal)
+ACTIVITY: "Reddit - r/askscience" -> YES (potentially supports goal)
+ACTIVITY: "Reddit - r/funny" -> NO (does not support goal)
 
 
 `;
@@ -129,14 +127,14 @@ function getEnhancedActivityDescription(windowInfo) {
 }
 
 /**
- * Check if activity is productive relative to goals using Gemini AI with enhanced caching
+ * Check if activity is productive relative to goal using Gemini AI with enhanced caching
  */
-async function checkProductivity(goals, windowInfo) {
+async function checkProductivity(goal, windowInfo) {
   const enhancedInfo = getEnhancedActivityDescription(windowInfo);
 
   // Create a comprehensive cache key
-  const goalsString = goals.map(g => g.toLowerCase().trim()).sort().join(':::');
-  const cacheKey = `${goalsString}:::${enhancedInfo.formattedInfo.toLowerCase().trim()}`;
+  const goalString = goal.toLowerCase().trim();
+  const cacheKey = `${goalString}:::${enhancedInfo.formattedInfo.toLowerCase().trim()}`;
 
   // Check if we already have a cached verdict
   if (productivityCache.has(cacheKey)) {
@@ -150,7 +148,7 @@ async function checkProductivity(goals, windowInfo) {
   const prompt = `${SYSTEM_PROMPT}
 
 [USER REQUEST]
-GOALS: [${goals.map(g => `"${g}"`).join(', ')}]
+GOAL: "${goal}"
 ${enhancedInfo.formattedInfo}
 YOUR RESPONSE:`;
 
@@ -242,7 +240,7 @@ function displaySessionStats() {
 /**
  * Check if user marked activity as productive and update cache accordingly
  */
-async function checkWhitelistAndCache(goals, enhancedInfo) {
+async function checkWhitelistAndCache(goal, enhancedInfo) {
   const whitelistFile = join(__dirname, 'whitelist.txt');
 
   try {
@@ -269,8 +267,8 @@ async function checkWhitelistAndCache(goals, enhancedInfo) {
 
       if (isMatch) {
         // Create the same cache key format as in checkProductivity
-        const goalsString = goals.map(g => g.toLowerCase().trim()).sort().join(':::');
-        const cacheKey = `${goalsString}:::${enhancedInfo.formattedInfo.toLowerCase().trim()}`;
+        const goalString = goal.toLowerCase().trim();
+        const cacheKey = `${goalString}:::${enhancedInfo.formattedInfo.toLowerCase().trim()}`;
 
         // Force update cache to YES
         productivityCache.set(cacheKey, true);
@@ -297,7 +295,7 @@ async function checkWhitelistAndCache(goals, enhancedInfo) {
 /**
  * Show enhanced blocking overlay using Electron
  */
-async function simulateBlocking(goals, windowInfo) {
+async function simulateBlocking(goal, windowInfo) {
   console.log("\n" + "=".repeat(50));
   console.log("🚫 BLOCKING ACTIVITY - NOT PRODUCTIVE!");
   console.log("=".repeat(50));
@@ -307,7 +305,7 @@ async function simulateBlocking(goals, windowInfo) {
   if (windowInfo.memoryUsageMB) {
     console.log(`Memory Usage: ${windowInfo.memoryUsageMB}MB`);
   }
-  console.log(`Goals: ${goals.join(', ')}`);
+  console.log(`Goal: ${goal}`);
   console.log("You're off task. Showing blocking screen...");
   console.log("=".repeat(50) + "\n");
 
@@ -335,7 +333,7 @@ async function simulateBlocking(goals, windowInfo) {
     // Spawn Electron process with enhanced information
     const electronProcess = spawn(electronPath, [
       overlayPath,
-      '--goal', goals.join(', '),
+      '--goal', goal,
       '--activity', windowInfo.title,
       '--app', windowInfo.owner.name,
       '--category', windowInfo.appCategory || 'Unknown'
@@ -348,7 +346,7 @@ async function simulateBlocking(goals, windowInfo) {
       console.log("✅ Blocking screen dismissed. Back to monitoring...\n");
 
       // Check if user marked the activity as productive
-      await checkWhitelistAndCache(goals, windowInfo);
+      await checkWhitelistAndCache(goal, windowInfo);
 
       resolve();
     });
@@ -376,16 +374,15 @@ async function getUserTask() {
   console.log("=".repeat(60));
 
   return new Promise((resolve) => {
-    rl.question("What are your current tasks/goals today? (separate with commas)\n➜ ", (answer) => {
-      const goals = answer.trim().split(',').map(goal => goal.trim()).filter(goal => goal.length > 0);
-      console.log(`\n✅ Tasks set: ${goals.join(', ')}`);
-      console.log(`📊 Monitoring ${goals.length} task${goals.length > 1 ? 's' : ''}`);
+    rl.question("What is your current task/goal today?\n➜ ", (answer) => {
+      const goal = answer.trim();
+      console.log(`\n✅ Task set: ${goal}`);
       console.log("Starting enhanced activity monitoring...\n");
       console.log("🔍 Features: App categorization, memory tracking, URL detection");
       console.log("📊 Features: Detailed analytics");
       console.log("\nMonitoring your activities...\n");
       rl.close();
-      resolve(goals);
+      resolve(goal);
     });
   });
 }
@@ -452,7 +449,7 @@ function sleep(seconds) {
  * Main app loop - monitors window changes in real-time with enhanced features
  */
 async function main() {
-  const goals = await getUserTask();
+  const goal = await getUserTask();
   sessionStats.sessionStartTime = Date.now();
 
   console.log("🔄 Window changes will be detected instantly");
@@ -572,12 +569,12 @@ async function main() {
         } else {
           // Check with AI
           console.log("🤔 Checking productivity with AI...");
-          const isProductive = await checkProductivity(goals, currentWindow);
+          const isProductive = await checkProductivity(goal, currentWindow);
 
           if (isProductive) {
             console.log("✅ Productive activity - continuing...\n");
           } else {
-            await simulateBlocking(goals, currentWindow);
+            await simulateBlocking(goal, currentWindow);
           }
         }
 

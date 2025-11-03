@@ -9,6 +9,8 @@ import NotFound from "./pages/NotFound";
 import AppLayout from "./components/AppLayout";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { MonitoringProvider } from "@/contexts/MonitoringContext";
+import { ListsProvider } from "@/contexts/ListsContext";
+import Lists from "./pages/Lists";
 
 const queryClient = new QueryClient();
 
@@ -16,20 +18,23 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <MonitoringProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <HashRouter>
-            <AppLayout>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/settings" element={<Settings />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppLayout>
-          </HashRouter>
-        </TooltipProvider>
+        <ListsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <HashRouter>
+              <AppLayout>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/lists" element={<Lists />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
+            </HashRouter>
+          </TooltipProvider>
+        </ListsProvider>
       </MonitoringProvider>
     </ThemeProvider>
   </QueryClientProvider>

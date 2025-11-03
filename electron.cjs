@@ -1,13 +1,14 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
+const { startMonitoring: startMonitoringService } = require('./monitoring-service.cjs');
 const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow;
 let currentTheme = 'light';
 
 // Monitoring state
-let monitoringProcess = null;
+let monitoringInstance = null;
 let monitoringState = {
   isActive: false,
   currentGoals: [],
@@ -41,7 +42,9 @@ function createWindow() {
 
   // Load the app
   if (isDev) {
-    mainWindow.loadURL('http://localhost:8080');
+    // Use environment variable or default to 8080
+    const devPort = process.env.VITE_PORT || '8080';
+    mainWindow.loadURL(`http://localhost:${devPort}`);
     // Open DevTools in development
     mainWindow.webContents.openDevTools();
   } else {
@@ -143,14 +146,17 @@ ipcMain.handle('get-theme', () => {
 });
 
 // Monitoring IPC handlers
-ipcMain.handle('start-monitoring', async (event, goals, duration) => {
+ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blocklist) => {
   try {
-    if (monitoringProcess) {
-      console.log('Monitoring already active, stopping previous process');
-      stopMonitoringProcess();
+    if (monitoringInstance) {
+      console.log('Monitoring already active, stopping previous instance');
+      monitoringInstance.stop();
+      monitoringInstance = null;
     }
 
     console.log('Starting monitoring with goals:', goals, 'duration:', duration);
+    console.log('Whitelist:', whitelist?.length || 0, 'items');
+    console.log('Blocklist:', blocklist?.length || 0, 'items');
 
     // Update monitoring state
     monitoringState.isActive = true;
@@ -162,8 +168,25 @@ ipcMain.handle('start-monitoring', async (event, goals, duration) => {
       currentWindow: null
     };
 
-    // Start monitoring process
-    startMonitoringProcess(goals, duration);
+    // Helper to send messages to renderer
+    const sendToRenderer = (channel, data) => {
+      mainWindow?.webContents.send(channel, data);
+    };
+
+    // Start monitoring service
+    monitoringInstance = await startMonitoringService(
+      goals,
+      duration,
+      sendToRenderer,
+      __dirname,
+      whitelist || [],
+      blocklist || []
+    );
+
+    // Minimize the FlowState window
+    if (mainWindow) {
+      mainWindow.minimize();
+    }
 
     // Send initial status to renderer
     mainWindow?.webContents.send('monitoring-status-change', {
@@ -183,7 +206,11 @@ ipcMain.handle('start-monitoring', async (event, goals, duration) => {
 ipcMain.handle('stop-monitoring', async () => {
   try {
     console.log('Stopping monitoring');
-    stopMonitoringProcess();
+
+    if (monitoringInstance) {
+      monitoringInstance.stop();
+      monitoringInstance = null;
+    }
 
     // Update monitoring state
     monitoringState.isActive = false;
@@ -212,103 +239,10 @@ ipcMain.handle('get-monitoring-status', () => {
   };
 });
 
-// Helper functions for monitoring process management
-function startMonitoringProcess(goals, duration) {
-  try {
-    console.log('Starting monitoring service with real MonitoringService');
-
-    // Spawn the actual MonitoringService process
-    const monitoringServicePath = path.join(__dirname, 'src', 'services', 'MonitoringService.js');
-    monitoringProcess = spawn('node', [monitoringServicePath, JSON.stringify(goals), duration.toString()], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, ELECTRON_PATH: process.execPath }
-    });
-
-    // Setup process communication
-    if (monitoringProcess) {
-      monitoringProcess.stdout.on('data', (data) => {
-        try {
-          const message = JSON.parse(data.toString());
-          handleMonitoringMessage(message);
-        } catch (error) {
-          console.log('Monitoring output:', data.toString().trim());
-        }
-      });
-
-      monitoringProcess.stderr.on('data', (data) => {
-        console.error('Monitoring error:', data.toString());
-        mainWindow?.webContents.send('monitoring-error', { error: data.toString() });
-      });
-
-      monitoringProcess.on('close', (code) => {
-        console.log(`Monitoring process exited with code ${code}`);
-        monitoringProcess = null;
-
-        // Auto-stop monitoring when process ends
-        if (monitoringState.isActive) {
-          stopMonitoringProcess();
-          mainWindow?.webContents.send('monitoring-status-change', {
-            isActive: false,
-            goals: [],
-            sessionStats: monitoringState.sessionStats
-          });
-        }
-      });
-
-      monitoringProcess.on('error', (error) => {
-        console.error('Monitoring process error:', error);
-        monitoringProcess = null;
-        mainWindow?.webContents.send('monitoring-error', { error: error.message });
-      });
-
-      console.log('Monitoring process started successfully');
-    } else {
-      throw new Error('Failed to spawn monitoring process');
-    }
-
-  } catch (error) {
-    console.error('Failed to start monitoring process:', error);
-    throw error;
-  }
-}
-
-function stopMonitoringProcess() {
-  if (monitoringProcess) {
-    monitoringProcess.kill('SIGTERM');
-    monitoringProcess = null;
-  }
-
-  monitoringState.isActive = false;
-  monitoringState.currentGoals = [];
-}
-
-function handleMonitoringMessage(message) {
-  switch (message.type) {
-    case 'window-detected':
-      monitoringState.sessionStats.currentWindow = message.data;
-      mainWindow?.webContents.send('window-detected', message.data);
-      break;
-
-    case 'activity-blocked':
-      monitoringState.sessionStats.blockedAttempts++;
-      mainWindow?.webContents.send('activity-blocked', message.data);
-      break;
-
-    case 'stats-update':
-      monitoringState.sessionStats = { ...monitoringState.sessionStats, ...message.data };
-      mainWindow?.webContents.send('monitoring-status-change', {
-        isActive: monitoringState.isActive,
-        goals: monitoringState.currentGoals,
-        sessionStats: monitoringState.sessionStats
-      });
-      break;
-
-    default:
-      console.log('Unknown monitoring message:', message);
-  }
-}
-
 // Cleanup on app exit
 app.on('before-quit', () => {
-  stopMonitoringProcess();
+  if (monitoringInstance) {
+    monitoringInstance.stop();
+    monitoringInstance = null;
+  }
 });

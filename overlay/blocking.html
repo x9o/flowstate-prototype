@@ -14,7 +14,8 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
       color: white;
       height: 100vh;
       display: flex;
@@ -27,15 +28,21 @@
 
     .container {
       text-align: center;
-      padding: 60px;
-      max-width: 900px;
-      animation: fadeIn 0.3s ease-in-out;
+      padding: 40px;
+      max-width: 800px;
+      animation: fadeIn 0.4s ease-in-out;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     @keyframes fadeIn {
       from {
         opacity: 0;
-        transform: scale(0.9);
+        transform: scale(0.95);
       }
       to {
         opacity: 1;
@@ -43,176 +50,275 @@
       }
     }
 
-    @keyframes pulse {
+    @keyframes breathe {
       0%, 100% {
         transform: scale(1);
       }
       50% {
-        transform: scale(1.05);
+        transform: scale(1.1);
       }
     }
 
     .icon {
-      font-size: 120px;
-      margin-bottom: 30px;
-      animation: pulse 2s ease-in-out infinite;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      animation: breathe 3s ease-in-out infinite;
     }
 
-    h1 {
-      font-size: 56px;
-      font-weight: 700;
-      margin-bottom: 30px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-    }
-
-    .message {
-      font-size: 24px;
-      margin-bottom: 40px;
-      line-height: 1.6;
-      opacity: 0.95;
-    }
-
-    .details {
-      background: rgba(0, 0, 0, 0.2);
-      padding: 30px;
-      border-radius: 16px;
-      margin: 40px 0;
-      backdrop-filter: blur(10px);
-    }
-
-    .detail-row {
-      margin: 20px 0;
-      font-size: 20px;
-    }
-
-    .label {
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 14px;
-      letter-spacing: 1px;
-      opacity: 0.8;
-      margin-bottom: 8px;
-    }
-
-    .value {
-      font-size: 24px;
+    .status {
+      font-size: 18px;
+      color: #e2e8f0;
+      margin-bottom: 32px;
       font-weight: 500;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .goal-pill {
+      display: inline-block;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
 
     .divider {
-      height: 2px;
-      background: rgba(255, 255, 255, 0.3);
-      margin: 30px auto;
-      width: 80%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      margin: 32px 0;
+    }
+
+    .quote {
+      font-size: 28px;
+      font-weight: 300;
+      font-style: italic;
+      margin-bottom: 8px;
+      color: #f1f5f9;
+      line-height: 1.4;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .quote-author {
+      font-size: 16px;
+      color: #cbd5e1;
+      margin-bottom: 32px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .reason-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 32px 0;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      text-align: left;
+    }
+
+    .reason-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-small {
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+    }
+
+    .reason-text {
+      font-size: 16px;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+
+    .stats-container {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin: 32px 0;
+    }
+
+    .stat-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 16px 24px;
+      min-width: 120px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 32px;
+      flex-wrap: wrap;
     }
 
     .button {
-      background: white;
-      color: #d32f2f;
       border: none;
-      padding: 20px 50px;
-      font-size: 20px;
-      font-weight: 700;
-      border-radius: 50px;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 30px;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-      background: #f5f5f5;
+    .button-primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+    }
+
+    .button-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+
+    .button-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      backdrop-filter: blur(8px);
+    }
+
+    .button-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .button-small {
+      padding: 12px 24px;
+      font-size: 14px;
     }
 
     .button:active {
       transform: translateY(-1px);
     }
 
-    .button-container {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      align-items: center;
-      margin-top: 30px;
-      flex-wrap: wrap;
-    }
-
-    .secondary-button {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 2px solid rgba(255, 255, 255, 0.5);
-    }
-
-    .secondary-button:hover {
-      background: rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.8);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    .hint {
-      margin-top: 25px;
-      font-size: 16px;
-      opacity: 0.8;
-    }
-
-    .keyboard-hint {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.2);
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-family: monospace;
-      font-weight: 600;
-      margin: 0 5px;
+    .small-text {
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 24px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="icon">🚫</div>
-    <h1>Off-Task Activity Detected</h1>
-    <p class="message">
-      You're drifting away from your goal. Let's refocus!
-    </p>
+    <img src="flowstate_transparent_light_resized.png" alt="FlowState" class="icon">
+    <div class="status">Taking a breath</div>
 
-    <div class="details">
-      <div class="detail-row">
-        <div class="label">Your Goal</div>
-        <div class="value" id="goal">Loading...</div>
+    <div class="goal-pill" id="goal">
+      You're working on: Loading...
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="quote">
+      "The obstacle is the way."
+    </div>
+    <div class="quote-author">
+      — Marcus Aurelius
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="reason-box">
+      <div class="reason-title">
+        <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        Why this was blocked
       </div>
-
-      <div class="divider"></div>
-
-      <div class="detail-row">
-        <div class="label">Blocked Activity</div>
-        <div class="value" id="activity">Loading...</div>
+      <div class="reason-text" id="reason">
+        <span id="activity">Loading...</span> isn't relevant to your goal.
       </div>
+    </div>
+
+    <div class="stats-container">
+      <div class="stat-box">
+        <div class="stat-value">
+          <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; margin-right: 4px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span id="focusTime">-- min</span>
+        </div>
+        <div class="stat-label">focused</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">
+          <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; margin-right: 4px;">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span id="blocksCount">-- blocks</span>
+        </div>
+        <div class="stat-label">stopped</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="button-container">
+      <button class="button button-primary" id="dismissBtn" onclick="dismissOverlay()">
+        Back to Work
+      </button>
+
+      <button class="button button-secondary" id="whitelistBtn" onclick="markAsProductive()">
+        This IS Productive
+      </button>
     </div>
 
     <div class="button-container">
-      <button class="button secondary-button" id="whitelistBtn" onclick="markAsProductive()">
-        Mark as Productive
+      <button class="button button-small button-secondary" onclick="temporaryDismiss()">
+        Dismiss (5 min)
       </button>
-
-      <button class="button" id="dismissBtn" onclick="dismissOverlay()">
-        Return to Work
+      <button class="button button-small button-secondary" onclick="endSession()">
+        End Session
       </button>
     </div>
-
-    <p class="hint">
-      Or press <span class="keyboard-hint">ESC</span> to dismiss
-    </p>
   </div>
 
   <script>
     // Check if electronAPI is available
     let electronAPIAvailable = false;
+    let sessionData = {
+      startTime: Date.now(),
+      blockedAttempts: 0
+    };
 
     // Listen for blocking data from main process
     if (window.electronAPI) {
@@ -221,18 +327,52 @@
 
       window.electronAPI.onBlockingData((data) => {
         console.log('Received blocking data:', data);
-        document.getElementById('goal').textContent = data.goal;
-        document.getElementById('activity').textContent = data.activity;
+        updateUI(data);
       });
     } else {
       console.error('Electron API not available!');
-      document.getElementById('goal').textContent = 'Error: No connection';
-      document.getElementById('activity').textContent = 'Error: No connection';
+      updateUI({
+        goal: 'Error: No connection',
+        activity: 'Error: No connection',
+        blocksStopped: 0
+      });
+    }
+
+    function updateUI(data) {
+      // Update goal pill
+      const goalElement = document.getElementById('goal');
+      goalElement.textContent = `You're working on: ${data.goal}`;
+
+      // Update activity in reason text
+      const activityElement = document.getElementById('activity');
+      activityElement.textContent = data.activity;
+
+      // Update session start time if provided
+      if (data.sessionStartTime) {
+        sessionData.startTime = data.sessionStartTime;
+      }
+
+      // Update blocked attempts if provided
+      if (data.blocksStopped !== undefined) {
+        sessionData.blockedAttempts = data.blocksStopped + 1; // Add current block
+      }
+
+      // Update stats
+      updateStats();
+    }
+
+    function updateStats() {
+      // Calculate focus time in minutes
+      const focusMinutes = Math.floor((Date.now() - sessionData.startTime) / 60000);
+      document.getElementById('focusTime').textContent = `${focusMinutes} min`;
+
+      // Update blocks count
+      document.getElementById('blocksCount').textContent = `${sessionData.blockedAttempts} blocks`;
     }
 
     // Mark as productive function
     function markAsProductive() {
-      console.log('Mark as Productive button clicked');
+      console.log('This IS Productive button clicked');
 
       if (electronAPIAvailable && window.electronAPI) {
         console.log('Sending whitelist signal');
@@ -243,17 +383,21 @@
         const originalActivity = activityElement.textContent;
 
         // Update UI to show confirmation
-        document.querySelector('.icon').textContent = '✅';
-        document.querySelector('h1').textContent = 'Marked as Productive';
-        document.querySelector('.message').textContent = 'This window will no longer be blocked during this session.';
+        document.querySelector('.icon').src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiI+CiAgPHBhdGggZD0iTTIyIDExLjA4VjEyYzAgMy4zNy0yLjYzIDYtNS44NSA2LjM1QTguMDAyIDguMDAyIDAgMCAxIDEyIDIwYTguMDAyIDguMDAyIDAgMCAxLTQuMTUtMS42NUM0LjYzIDE4IDIgMTUuMzcgMiAxMnYtMWMwLTQuNDIgMy41OC04IDgtOHM4IDMuNTggOCA4YzEuNDUgMCAyLjgtLjM5IDMuOTgtMS4wOE0yMiA0bC05IDkuMDFMNCAxMSI+PC9wYXRoPgo8L3N2Zz4=';
+        document.querySelector('.status').textContent = 'Marked as Productive';
+        document.querySelector('.reason-text').innerHTML = `"${originalActivity}" has been marked as productive and won't be blocked again this session.`;
 
         // Change button container to show confirmation
-        const buttonContainer = document.querySelector('.button-container');
-        buttonContainer.innerHTML = `
-          <button class="button" onclick="dismissOverlay()">
+        const primaryButtonContainer = document.querySelectorAll('.button-container')[0];
+        primaryButtonContainer.innerHTML = `
+          <button class="button button-primary" onclick="dismissOverlay()">
             Continue Working
           </button>
         `;
+
+        // Hide secondary buttons
+        const secondaryButtonContainer = document.querySelectorAll('.button-container')[1];
+        secondaryButtonContainer.style.display = 'none';
 
         console.log(`Activity "${originalActivity}" marked as productive`);
       } else {
@@ -265,9 +409,9 @@
       }
     }
 
-    // Dismiss overlay function
+    // Dismiss overlay function (Back to Work)
     function dismissOverlay() {
-      console.log('Dismiss button clicked');
+      console.log('Back to Work button clicked');
 
       if (electronAPIAvailable && window.electronAPI) {
         console.log('Sending dismiss signal');
@@ -281,6 +425,28 @@
       }
     }
 
+    // Temporary dismiss function (5 minutes)
+    function temporaryDismiss() {
+      console.log('Temporary dismiss (5 min) clicked');
+
+      // For now, just dismiss - the 5-minute logic would need to be implemented in the monitoring service
+      dismissOverlay();
+    }
+
+    // End session function
+    function endSession() {
+      console.log('End session clicked');
+
+      if (electronAPIAvailable && window.electronAPI) {
+        // This would need to be implemented in the monitoring service
+        console.log('Sending end session signal');
+        // For now, just dismiss the overlay
+        dismissOverlay();
+      } else {
+        dismissOverlay();
+      }
+    }
+
     // Handle ESC key
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
@@ -288,6 +454,9 @@
         dismissOverlay();
       }
     });
+
+    // Update stats every second
+    setInterval(updateStats, 1000);
 
     // Focus button on load for keyboard accessibility
     window.addEventListener('load', () => {
