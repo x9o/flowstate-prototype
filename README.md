@@ -48,22 +48,98 @@ FlowState helps users enter and maintain a **"flow state"** — a period of deep
 
 ### **Core Features**
 - [x] **Task Manager** — Add, enable/disable, and delete tasks with color coding
-- [x] **Timer / Focus Mode** — Set focus duration with circular progress visualization
+- [ ] **Task-Based Sessions** — Flexible duration (work until done) + optional Pomodoro mode
+- [ ] **Session Timer** — Counts UP (elapsed time), not down. No fixed end time by default
+- [ ] **Pomodoro Mode Toggle** — Optional 25/5 work/break cycles with visual progress
 - [x] **Monitoring Engine** — Active window detection with AI-powered productivity analysis
-- [x] **Smart Task Validation** — Popup alerts when starting timer without enabled tasks
+
+### **Task Input & Validation**
+- [ ] **Client-Side Validation (Free)** — Instant validation (vague phrases, gibberish, word count)
+- [ ] **AI Task Validation (Pro/Prototype)** — Gemini-powered clarity checker with suggestions
+- [ ] **Recent Tasks List** — Quick-restart previous goals (last 3-5 shown on home)
+- [ ] **Task History** — Auto-save all past tasks with timestamps
 
 ### **Blocking System**
 - [x] **AI-Based Blocking** — Dynamic blocking using Gemini AI intent analysis
 - [x] **Productivity Caching** — Smart caching system for AI decisions
-- [ ] **Whitelist / Blacklist** — Manual app/site rule configuration (in progress)
-- [ ] **Built-in Productivity DB** — Predefined safe apps (e.g. VSCode, Notion, Docs, Figma)
+- [ ] **Whitelist / Blacklist** — Manual app/site rule configuration
+- [ ] **Built-in Productivity DB** — Predefined safe apps (Notion, VSCode, Docs, Figma, Slack, etc.)
+- [ ] **Built-in Distraction DB** — Predefined blocked apps (Reddit, Twitter, Netflix, Roblox, etc.)
 
 ### **AI Intelligence**
 - [x] **AI Intent Matching** — Uses Gemini-based classifier to judge relevance of current activity
 - [x] **Context-Aware Blocking** — Understands user goals vs current activity
 - [x] **Multi-Task Support** — AI considers all enabled tasks when making decisions
 - [ ] **AI Modes** — "Strict", "Balanced", "Lenient" sensitivity levels
-- [ ] **Task Validation** - Ask user/auto generate more details when given ambigious tasks. 
+- [ ] **Task Validation AI** — Gemini checks if goal is clear enough (Pro feature on launch)
+
+### **Blocking Overlay UI**
+- [ ] **Calm Design** — Soft gray (#F9FAFB) background with glassmorphism blur
+- [ ] **Context Display** — Shows current goal + why this was blocked
+- [ ] **Session Stats** — Time focused + distractions blocked (in overlay)
+- [ ] **Motivational Quotes** — Rotating quotes or breathing prompts (user toggle)
+- [ ] **Action Buttons:**
+  - [ ] "Back to Work" (primary, Enter key)
+  - [ ] "Mark Productive" (secondary, Cmd/Ctrl+P)
+  - [ ] "Dismiss for 5 min" (tertiary link, Cmd/Ctrl+D)
+  - [ ] "End Session" (tertiary link, Cmd/Ctrl+Q)
+
+### **Session Completion Screen**
+- [ ] **Victory Layout** — Animated checkmark with sparkles/confetti
+- [ ] **Hero Metric** — Large focus time display with progress bar
+- [ ] **Personal Best Comparison** — Shows % of personal best with color coding
+- [ ] **Secondary Stats** — Distractions blocked + streak counter (side-by-side cards)
+- [ ] **Daily Progress Bar** — Cumulative progress toward daily goal
+- [ ] **Motivational Quote** — Randomly selected from quote pool
+- [ ] **Action Buttons:**
+  - [ ] "Start Another Task" (primary)
+  - [ ] "Share" (secondary, generates shareable card)
+  - [ ] "Done" (tertiary)
+- [ ] **Variable Animations** — Different effects for milestones (new record, streak, etc.)
+
+### **Home Screen Layout**
+- [ ] **Left Sidebar:**
+  - [ ] Quick Start section
+  - [ ] Navigation (Today's Tasks, Stats, Settings)
+  - [ ] Quick Access (Whitelist, Blocklist)
+- [ ] **Main Content:**
+  - [ ] Large goal input field with validation
+  - [ ] Pomodoro mode checkbox (optional)
+  - [ ] "Start Focusing" button (primary CTA)
+  - [ ] Recent tasks list (3-5 with play icons)
+  - [ ] Quick tips section
+- [ ] **Active Session View:**
+  - [ ] Current goal display
+  - [ ] Elapsed time (counting up)
+  - [ ] Session stats (time + blocks)
+  - [ ] Recent blocks list
+  - [ ] Pause/Task Complete buttons
+
+### **Stats & Progress Tracking**
+- [ ] **Streak System** — Days with at least 1 completed session
+  - [ ] Visual counter (🔥 X days)
+  - [ ] Current + longest streak display
+  - [ ] Celebratory messages at milestones (3, 7, 14, 30 days)
+  - [ ] No guilt-tripping or aggressive notifications
+- [ ] **Daily Stats:**
+  - [ ] Total focus time (cumulative across sessions)
+  - [ ] Distractions blocked count
+  - [ ] Sessions completed
+  - [ ] Progress toward daily goal
+- [ ] **Weekly/Monthly Stats:**
+  - [ ] Average daily focus time
+  - [ ] Total focus hours
+  - [ ] Best days
+  - [ ] Most blocked apps
+
+### **Monetization (Time-Based)**
+- [ ] **Free Tier** — 2 hours of focus time per day
+- [ ] **Pro Tier** — Unlimited daily focus time ($5/mo)
+- [ ] **Time Tracking** — Cumulative daily minutes across all sessions
+- [ ] **Limit Warnings:**
+  - [ ] "15 min remaining" notification
+  - [ ] "Limit reached" celebration screen
+  - [ ] Upgrade prompts (non-aggressive)
 
 ### **User Interface**
 - [x] **Responsive Design** — Mobile-first design that scales to desktop
@@ -71,10 +147,14 @@ FlowState helps users enter and maintain a **"flow state"** — a period of deep
 - [x] **Custom Components** — Task cards, focus timer, user dropdown, settings panel
 - [x] **Non-Selectable Text** — Clean UI with no text highlighting
 - [x] **Gradient Branding** — Dynamic sphere gradient that syncs with theme
+- [ ] **Color Scheme:** Primary #4C6FFF, Accent #10B981, Alert #EF4444
 
 ### **User Preferences**
 - [x] **Settings Page** — Full settings interface with navigation
-- [x] **Whitelist/Blacklist UI** — Input fields for custom filtering rules
+- [ ] **Whitelist/Blacklist Editor** — Add/remove apps with icons and search
+- [ ] **Strictness Levels** — Relaxed/Balanced/Strict AI sensitivity
+- [ ] **Completion Style Toggle** — Minimal/Celebratory/Detailed completion screens
+- [ ] **Notification Preferences** — On/off for various alert types
 - [x] **User Dropdown** — Account and settings access with animations
 - [x] **Navigation System** — React Router with back navigation support
 
@@ -82,16 +162,22 @@ FlowState helps users enter and maintain a **"flow state"** — a period of deep
 - [x] **Electron Integration** — Full desktop app with custom branding
 - [x] **Window Monitoring** — Real-time active window detection
 - [x] **Overlay System** — Fullscreen blocking overlay with dismissal options
-- [x] **Timer Integration** — Focus timer connects to monitoring system
+- [ ] **Flexible Timer System** — Task-based (no limit) + Pomodoro modes
+- [ ] **Local Data Storage** — JSON files for tasks, stats, preferences
+- [ ] **API Integration** — Gemini 2.5 Flash-Lite for classification
 
 ### **Additional Features**
 - [x] **Smart Alerts** — Task validation popup with helpful user guidance
 - [x] **App Branding** — Custom icon and window title ("FlowState")
-- [ ] **Keyboard Shortcuts** — Start/stop session quickly
-- [ ] **Smart Notifications** — Alerts for distractions or milestones
-- [ ] **Non intrusive block screen** - With a quote or breath reminder, and replace the harsh red screen.
+- [ ] **Keyboard Shortcuts:**
+  - [ ] Enter: Back to Work (in overlay)
+  - [ ] Cmd/Ctrl+P: Mark Productive
+  - [ ] Cmd/Ctrl+D: Dismiss 5 min
+  - [ ] Cmd/Ctrl+Q: End Session
+  - [ ] Cmd/Ctrl+N: New Task
+- [ ] **Smart Notifications** — Session complete, streak maintained, limit warnings
+- [ ] **Session Pause** — 5-minute break mode (blocking disabled)
 
----
 
 ## 🧱 App Layout Overview
 
