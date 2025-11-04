@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Play, Target, Lightbulb, ArrowRight, Square, Flame, Clock, Shield } from "lucide-react";
+import { Plus, Search, Play, Target, Lightbulb, ArrowRight, Square, Flame, Clock, Shield, FileText, TrendingUp, CheckCircle } from "lucide-react";
 import { useTheme } from '@/contexts/ThemeContext';
 import { useMonitoring } from '@/contexts/MonitoringContext';
 import { useLists } from '@/contexts/ListsContext';
@@ -14,30 +14,19 @@ import { quotes } from '@/data/quotes';
 // Time-based greetings
 const getGreeting = () => {
   const hour = new Date().getHours();
-  const emojis = {
-    morning: ["🌅", "🌄", "☀️"],
-    afternoon: ["🌤️", "☀️", "🌞"],
-    evening: ["🌆", "🌇", "🌙"],
-    night: ["🌙", "🌜", "⭐"]
-  };
 
-  let greeting, emojiSet;
+  let greeting;
   if (hour >= 5 && hour < 12) {
     greeting = "Good morning";
-    emojiSet = emojis.morning;
   } else if (hour >= 12 && hour < 17) {
     greeting = "Good afternoon";
-    emojiSet = emojis.afternoon;
   } else if (hour >= 17 && hour < 21) {
     greeting = "Good evening";
-    emojiSet = emojis.evening;
   } else {
     greeting = "Good night";
-    emojiSet = emojis.night;
   }
 
-  const randomEmoji = emojiSet[Math.floor(Math.random() * emojiSet.length)];
-  return `${greeting}, Sunny! ${randomEmoji}`;
+  return `${greeting}, Sunny!`;
 };
 
 
@@ -386,7 +375,10 @@ const Index = () => {
                     ? 'bg-card border border-border'
                     : 'bg-white border border-gray-200 shadow-sm'
                 }`}>
-                  <h3 className="text-xl font-semibold mb-4">📋 Recent Tasks</h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold">Recent Tasks</h3>
+                  </div>
                   <div className="space-y-3">
                     {tasks.length === 0 ? (
                       <div className="text-center py-8">
@@ -430,7 +422,7 @@ const Index = () => {
               }`}>
                 <div className="flex items-center gap-2 mb-4">
                   <Lightbulb className="w-5 h-5 text-mint" />
-                  <h3 className="text-lg font-semibold">💡 Quick Tip</h3>
+                  <h3 className="text-lg font-semibold">Productivity Tip</h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed transition-all duration-500 ease-in-out">
                   {currentTip}
