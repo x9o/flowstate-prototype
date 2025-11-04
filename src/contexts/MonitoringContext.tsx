@@ -4,7 +4,6 @@ import { MonitoringState, WindowInfo, ActivityBlockedEvent, MonitoringErrorEvent
 interface ListItem {
   id: string;
   name: string;
-  type: 'app' | 'website';
   pattern: string;
   icon?: string;
 }

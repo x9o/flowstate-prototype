@@ -1,17 +1,11 @@
 import { useState } from 'react';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, X, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import * as SimpleIcons from 'react-icons/si';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLists } from '@/contexts/ListsContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -23,42 +17,40 @@ import {
 
 const Lists = () => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const { whitelist, blocklist, addToWhitelist, addToBlocklist, removeFromWhitelist, removeFromBlocklist } = useLists();
 
   const [isWhitelistDialogOpen, setIsWhitelistDialogOpen] = useState(false);
   const [isBlocklistDialogOpen, setIsBlocklistDialogOpen] = useState(false);
 
-  // Form state
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemType, setNewItemType] = useState<'app' | 'website'>('app');
-  const [newItemPattern, setNewItemPattern] = useState('');
+  // Form state - separate for each dialog
+  const [whitelistItem, setWhitelistItem] = useState({ name: '', pattern: '' });
+  const [blocklistItem, setBlocklistItem] = useState({ name: '', pattern: '' });
 
   const handleAddToWhitelist = () => {
-    if (newItemName && newItemPattern) {
+    if (whitelistItem.name && whitelistItem.pattern) {
+      const icon = findIconForName(whitelistItem.name);
       addToWhitelist({
-        name: newItemName,
-        type: newItemType,
-        pattern: newItemPattern,
+        name: whitelistItem.name,
+        pattern: whitelistItem.pattern,
+        icon: icon,
       });
       // Reset form
-      setNewItemName('');
-      setNewItemPattern('');
-      setNewItemType('app');
+      setWhitelistItem({ name: '', pattern: '' });
       setIsWhitelistDialogOpen(false);
     }
   };
 
   const handleAddToBlocklist = () => {
-    if (newItemName && newItemPattern) {
+    if (blocklistItem.name && blocklistItem.pattern) {
+      const icon = findIconForName(blocklistItem.name);
       addToBlocklist({
-        name: newItemName,
-        type: newItemType,
-        pattern: newItemPattern,
+        name: blocklistItem.name,
+        pattern: blocklistItem.pattern,
+        icon: icon,
       });
       // Reset form
-      setNewItemName('');
-      setNewItemPattern('');
-      setNewItemType('app');
+      setBlocklistItem({ name: '', pattern: '' });
       setIsBlocklistDialogOpen(false);
     }
   };
@@ -70,6 +62,80 @@ const Lists = () => {
     return <IconComponent className="w-5 h-5" />;
   };
 
+  // Function to find an icon for a given app/website name
+  const findIconForName = (name: string) => {
+    const lowerName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Common icon mappings
+    const iconMap: { [key: string]: string } = {
+      'chrome': 'SiGooglechrome',
+      'firefox': 'SiFirefox',
+      'safari': 'SiSafari',
+      'edge': 'SiMicrosoftedge',
+      'code': 'SiVisualstudiocode',
+      'vscode': 'SiVisualstudiocode',
+      'notion': 'SiNotion',
+      'slack': 'SiSlack',
+      'discord': 'SiDiscord',
+      'telegram': 'SiTelegram',
+      'whatsapp': 'SiWhatsapp',
+      'spotify': 'SiSpotify',
+      'youtube': 'SiYoutube',
+      'instagram': 'SiInstagram',
+      'facebook': 'SiFacebook',
+      'twitter': 'SiTwitter',
+      'x': 'SiX',
+      'tiktok': 'SiTiktok',
+      'linkedin': 'SiLinkedin',
+      'github': 'SiGithub',
+      'gitlab': 'SiGitlab',
+      'figma': 'SiFigma',
+      'sketch': 'SiSketch',
+      'photoshop': 'SiAdobephotoshop',
+      'illustrator': 'SiAdobeillustrator',
+      'zoom': 'SiZoom',
+      'teams': 'SiMicrosoftteams',
+      'outlook': 'SiMicrosoftoutlook',
+      'excel': 'SiMicrosoftexcel',
+      'word': 'SiMicrosoftword',
+      'powerpoint': 'SiMicrosoftpowerpoint',
+      'jira': 'SiJira',
+      'trello': 'SiTrello',
+      'asana': 'SiAsana',
+      'netflix': 'SiNetflix',
+      'twitch': 'SiTwitch',
+      'steam': 'SiSteam',
+      'epic': 'SiEpicgames',
+      'roblox': 'SiRoblox',
+      'minecraft': 'SiMinecraft',
+      'calm': 'SiCalm',
+      'headspace': 'SiHeadspace',
+      'reddit': 'SiReddit',
+      'stackoverflow': 'SiStackoverflow',
+      'medium': 'SiMedium',
+    };
+
+    // First try exact match
+    if (iconMap[lowerName]) {
+      return iconMap[lowerName];
+    }
+
+    // Try partial matches
+    for (const [key, icon] of Object.entries(iconMap)) {
+      if (lowerName.includes(key) || key.includes(lowerName)) {
+        return icon;
+      }
+    }
+
+    // Try to find icon in SimpleIcons directly
+    const iconName = 'Si' + name.charAt(0).toUpperCase() + name.slice(1).replace(/[^a-zA-Z0-9]/g, '');
+    if ((SimpleIcons as any)[iconName]) {
+      return iconName;
+    }
+
+    return null; // No icon found
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Main Content Area */}
@@ -79,6 +145,16 @@ const Lists = () => {
           theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'
         }`}>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/')}
+              className={`p-2 rounded-lg transition-colors ${
+                theme === 'dark'
+                  ? 'text-purple-200 hover:text-white hover:bg-purple-900'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             <h1 className="text-lg font-semibold">Lists Management</h1>
           </div>
         </header>
@@ -117,32 +193,17 @@ const Lists = () => {
                         <label className="text-sm font-medium mb-2 block">Name</label>
                         <Input
                           placeholder="e.g., Notion"
-                          value={newItemName}
-                          onChange={(e) => setNewItemName(e.target.value)}
+                          value={whitelistItem.name}
+                          onChange={(e) => setWhitelistItem({ ...whitelistItem, name: e.target.value })}
                           className="rounded-xl"
                         />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Type</label>
-                        <Select
-                          value={newItemType}
-                          onValueChange={(value: 'app' | 'website') => setNewItemType(value)}
-                        >
-                          <SelectTrigger className="rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="app">App</SelectItem>
-                            <SelectItem value="website">Website</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-2 block">Pattern</label>
                         <Input
                           placeholder="e.g., notion (matches window title, app name, or URL)"
-                          value={newItemPattern}
-                          onChange={(e) => setNewItemPattern(e.target.value)}
+                          value={whitelistItem.pattern}
+                          onChange={(e) => setWhitelistItem({ ...whitelistItem, pattern: e.target.value })}
                           className="rounded-xl"
                         />
                         <p className="text-xs text-muted-foreground mt-1">
@@ -183,7 +244,7 @@ const Lists = () => {
                           <div>
                             <p className="font-medium">{item.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {item.type === 'app' ? 'Application' : 'Website'} • Pattern: {item.pattern}
+                              Pattern: {item.pattern}
                             </p>
                           </div>
                         </div>
@@ -234,32 +295,17 @@ const Lists = () => {
                         <label className="text-sm font-medium mb-2 block">Name</label>
                         <Input
                           placeholder="e.g., Instagram"
-                          value={newItemName}
-                          onChange={(e) => setNewItemName(e.target.value)}
+                          value={blocklistItem.name}
+                          onChange={(e) => setBlocklistItem({ ...blocklistItem, name: e.target.value })}
                           className="rounded-xl"
                         />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Type</label>
-                        <Select
-                          value={newItemType}
-                          onValueChange={(value: 'app' | 'website') => setNewItemType(value)}
-                        >
-                          <SelectTrigger className="rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="app">App</SelectItem>
-                            <SelectItem value="website">Website</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-2 block">Pattern</label>
                         <Input
                           placeholder="e.g., instagram (matches window title, app name, or URL)"
-                          value={newItemPattern}
-                          onChange={(e) => setNewItemPattern(e.target.value)}
+                          value={blocklistItem.pattern}
+                          onChange={(e) => setBlocklistItem({ ...blocklistItem, pattern: e.target.value })}
                           className="rounded-xl"
                         />
                         <p className="text-xs text-muted-foreground mt-1">
@@ -300,7 +346,7 @@ const Lists = () => {
                           <div>
                             <p className="font-medium">{item.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {item.type === 'app' ? 'Application' : 'Website'} • Pattern: {item.pattern}
+                              Pattern: {item.pattern}
                             </p>
                           </div>
                         </div>

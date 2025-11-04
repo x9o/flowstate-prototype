@@ -3,8 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface ListItem {
   id: string;
   name: string;
-  type: 'app' | 'website';
-  pattern: string; // Pattern to match against window title or URL
+  pattern: string; // Pattern to match against window title, app name, or URL
   icon?: string; // Icon component name from react-icons
 }
 
@@ -23,28 +22,28 @@ const ListsContext = createContext<ListsContextType | undefined>(undefined);
 
 // Default whitelist - productivity apps
 const DEFAULT_WHITELIST: Omit<ListItem, 'id'>[] = [
-  { name: 'Notion', type: 'app', pattern: 'notion', icon: 'SiNotion' },
-  { name: 'Slack', type: 'app', pattern: 'slack', icon: 'SiSlack' },
-  { name: 'VS Code', type: 'app', pattern: 'visual studio code|vscode|code', icon: 'SiVisualstudiocode' },
-  { name: 'GitHub', type: 'website', pattern: 'github', icon: 'SiGithub' },
-  { name: 'Stack Overflow', type: 'website', pattern: 'stackoverflow', icon: 'SiStackoverflow' },
-  { name: 'Google Docs', type: 'website', pattern: 'docs.google', icon: 'SiGoogledocs' },
-  { name: 'Microsoft Teams', type: 'app', pattern: 'teams', icon: 'SiMicrosoftteams' },
-  { name: 'Zoom', type: 'app', pattern: 'zoom', icon: 'SiZoom' },
-  { name: 'Figma', type: 'app', pattern: 'figma', icon: 'SiFigma' },
-  { name: 'Jira', type: 'website', pattern: 'jira|atlassian', icon: 'SiJira' },
+  { name: 'Notion', pattern: 'notion', icon: 'SiNotion' },
+  { name: 'Slack', pattern: 'slack', icon: 'SiSlack' },
+  { name: 'VS Code', pattern: 'visual studio code|vscode|code', icon: 'SiVisualstudiocode' },
+  { name: 'GitHub', pattern: 'github', icon: 'SiGithub' },
+  { name: 'Stack Overflow', pattern: 'stackoverflow', icon: 'SiStackoverflow' },
+  { name: 'Google Docs', pattern: 'docs.google', icon: 'SiGoogledocs' },
+  { name: 'Microsoft Teams', pattern: 'teams', icon: 'SiMicrosoftteams' },
+  { name: 'Zoom', pattern: 'zoom', icon: 'SiZoom' },
+  { name: 'Figma', pattern: 'figma', icon: 'SiFigma' },
+  { name: 'Jira', pattern: 'jira|atlassian', icon: 'SiJira' },
 ];
 
 // Default blocklist - distraction apps
 const DEFAULT_BLOCKLIST: Omit<ListItem, 'id'>[] = [
-  { name: 'Instagram', type: 'website', pattern: 'instagram', icon: 'SiInstagram' },
-  { name: 'TikTok', type: 'app', pattern: 'tiktok', icon: 'SiTiktok' },
-  { name: 'Roblox', type: 'app', pattern: 'roblox', icon: 'SiRoblox' },
-  { name: 'Netflix', type: 'website', pattern: 'netflix', icon: 'SiNetflix' },
-  { name: 'YouTube', type: 'website', pattern: 'youtube', icon: 'SiYoutube' },
-  { name: 'Twitch', type: 'website', pattern: 'twitch', icon: 'SiTwitch' },
-  { name: 'Facebook', type: 'website', pattern: 'facebook', icon: 'SiFacebook' },
-  { name: 'Snapchat', type: 'app', pattern: 'snapchat', icon: 'SiSnapchat' },
+  { name: 'Instagram', pattern: 'instagram', icon: 'SiInstagram' },
+  { name: 'TikTok', pattern: 'tiktok', icon: 'SiTiktok' },
+  { name: 'Roblox', pattern: 'roblox', icon: 'SiRoblox' },
+  { name: 'Netflix', pattern: 'netflix', icon: 'SiNetflix' },
+  { name: 'YouTube', pattern: 'youtube', icon: 'SiYoutube' },
+  { name: 'Twitch', pattern: 'twitch', icon: 'SiTwitch' },
+  { name: 'Facebook', pattern: 'facebook', icon: 'SiFacebook' },
+  { name: 'Snapchat', pattern: 'snapchat', icon: 'SiSnapchat' },
 ];
 
 export const ListsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -56,43 +55,58 @@ export const ListsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const savedWhitelist = localStorage.getItem('flowstate-whitelist');
     const savedBlocklist = localStorage.getItem('flowstate-blocklist');
 
-    if (savedWhitelist) {
-      setWhitelist(JSON.parse(savedWhitelist));
-    } else {
-      // Set default whitelist
+    try {
+      if (savedWhitelist) {
+        const parsedWhitelist = JSON.parse(savedWhitelist);
+        setWhitelist(parsedWhitelist);
+      } else {
+        // Set default whitelist
+        const defaultWhitelist = DEFAULT_WHITELIST.map((item, index) => ({
+          ...item,
+          id: `wl-${index}`,
+        }));
+        setWhitelist(defaultWhitelist);
+        localStorage.setItem('flowstate-whitelist', JSON.stringify(defaultWhitelist));
+      }
+
+      if (savedBlocklist) {
+        const parsedBlocklist = JSON.parse(savedBlocklist);
+        setBlocklist(parsedBlocklist);
+      } else {
+        // Set default blocklist
+        const defaultBlocklist = DEFAULT_BLOCKLIST.map((item, index) => ({
+          ...item,
+          id: `bl-${index}`,
+        }));
+        setBlocklist(defaultBlocklist);
+        localStorage.setItem('flowstate-blocklist', JSON.stringify(defaultBlocklist));
+      }
+    } catch (error) {
+      console.error('Error loading lists from localStorage:', error);
+      // If there's an error (e.g., corrupted data), load defaults
       const defaultWhitelist = DEFAULT_WHITELIST.map((item, index) => ({
         ...item,
         id: `wl-${index}`,
       }));
-      setWhitelist(defaultWhitelist);
-      localStorage.setItem('flowstate-whitelist', JSON.stringify(defaultWhitelist));
-    }
-
-    if (savedBlocklist) {
-      setBlocklist(JSON.parse(savedBlocklist));
-    } else {
-      // Set default blocklist
       const defaultBlocklist = DEFAULT_BLOCKLIST.map((item, index) => ({
         ...item,
         id: `bl-${index}`,
       }));
+      setWhitelist(defaultWhitelist);
       setBlocklist(defaultBlocklist);
+      localStorage.setItem('flowstate-whitelist', JSON.stringify(defaultWhitelist));
       localStorage.setItem('flowstate-blocklist', JSON.stringify(defaultBlocklist));
     }
   }, []);
 
   // Save whitelist to localStorage whenever it changes
   useEffect(() => {
-    if (whitelist.length > 0) {
-      localStorage.setItem('flowstate-whitelist', JSON.stringify(whitelist));
-    }
+    localStorage.setItem('flowstate-whitelist', JSON.stringify(whitelist));
   }, [whitelist]);
 
   // Save blocklist to localStorage whenever it changes
   useEffect(() => {
-    if (blocklist.length > 0) {
-      localStorage.setItem('flowstate-blocklist', JSON.stringify(blocklist));
-    }
+    localStorage.setItem('flowstate-blocklist', JSON.stringify(blocklist));
   }, [blocklist]);
 
   const addToWhitelist = (item: Omit<ListItem, 'id'>) => {
