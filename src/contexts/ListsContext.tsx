@@ -58,26 +58,52 @@ export const ListsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       if (savedWhitelist) {
         const parsedWhitelist = JSON.parse(savedWhitelist);
-        setWhitelist(parsedWhitelist);
+        console.log('📋 Loaded whitelist from localStorage:', parsedWhitelist);
+        // TEMPORARY: Force reload defaults if whitelist is empty
+        if (parsedWhitelist.length === 0) {
+          console.log('⚠️ Whitelist is empty, loading defaults...');
+          const defaultWhitelist = DEFAULT_WHITELIST.map((item, index) => ({
+            ...item,
+            id: `wl-${index}`,
+          }));
+          setWhitelist(defaultWhitelist);
+          localStorage.setItem('flowstate-whitelist', JSON.stringify(defaultWhitelist));
+        } else {
+          setWhitelist(parsedWhitelist);
+        }
       } else {
         // Set default whitelist
         const defaultWhitelist = DEFAULT_WHITELIST.map((item, index) => ({
           ...item,
           id: `wl-${index}`,
         }));
+        console.log('📋 Setting default whitelist:', defaultWhitelist);
         setWhitelist(defaultWhitelist);
         localStorage.setItem('flowstate-whitelist', JSON.stringify(defaultWhitelist));
       }
 
       if (savedBlocklist) {
         const parsedBlocklist = JSON.parse(savedBlocklist);
-        setBlocklist(parsedBlocklist);
+        console.log('🚫 Loaded blocklist from localStorage:', parsedBlocklist);
+        // TEMPORARY: Force reload defaults if blocklist is empty
+        if (parsedBlocklist.length === 0) {
+          console.log('⚠️ Blocklist is empty, loading defaults...');
+          const defaultBlocklist = DEFAULT_BLOCKLIST.map((item, index) => ({
+            ...item,
+            id: `bl-${index}`,
+          }));
+          setBlocklist(defaultBlocklist);
+          localStorage.setItem('flowstate-blocklist', JSON.stringify(defaultBlocklist));
+        } else {
+          setBlocklist(parsedBlocklist);
+        }
       } else {
         // Set default blocklist
         const defaultBlocklist = DEFAULT_BLOCKLIST.map((item, index) => ({
           ...item,
           id: `bl-${index}`,
         }));
+        console.log('🚫 Setting default blocklist:', defaultBlocklist);
         setBlocklist(defaultBlocklist);
         localStorage.setItem('flowstate-blocklist', JSON.stringify(defaultBlocklist));
       }

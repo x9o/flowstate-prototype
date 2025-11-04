@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Play, Target, Lightbulb, ArrowRight, Square } from "lucide-react";
+import { Plus, Search, Play, Target, Lightbulb, ArrowRight, Square, Flame, Clock, Shield } from "lucide-react";
 import { useTheme } from '@/contexts/ThemeContext';
 import { useMonitoring } from '@/contexts/MonitoringContext';
 import { useLists } from '@/contexts/ListsContext';
@@ -9,6 +9,68 @@ import { Input } from "@/components/ui/input";
 import { UserDropdown } from "@/components/Dropdown";
 import { MonitoringStatus } from "@/components/MonitoringStatus";
 import { Sidebar } from "@/components/Sidebar";
+import { quotes } from '@/data/quotes';
+
+// Time-based greetings
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  const emojis = {
+    morning: ["🌅", "🌄", "☀️"],
+    afternoon: ["🌤️", "☀️", "🌞"],
+    evening: ["🌆", "🌇", "🌙"],
+    night: ["🌙", "🌜", "⭐"]
+  };
+
+  let greeting, emojiSet;
+  if (hour >= 5 && hour < 12) {
+    greeting = "Good morning";
+    emojiSet = emojis.morning;
+  } else if (hour >= 12 && hour < 17) {
+    greeting = "Good afternoon";
+    emojiSet = emojis.afternoon;
+  } else if (hour >= 17 && hour < 21) {
+    greeting = "Good evening";
+    emojiSet = emojis.evening;
+  } else {
+    greeting = "Good night";
+    emojiSet = emojis.night;
+  }
+
+  const randomEmoji = emojiSet[Math.floor(Math.random() * emojiSet.length)];
+  return `${greeting}, Sunny! ${randomEmoji}`;
+};
+
+
+// Tips
+const tips = [
+  "Work until your task is done, then take a well-deserved break.",
+  "Focus on one thing at a time for maximum productivity.",
+  "Take a 5-minute break every 25 minutes to stay fresh.",
+  "Eliminate distractions before you start working.",
+  "Set clear goals for each focus session.",
+  "Track your progress to stay motivated.",
+  "Celebrate small wins along the way.",
+  "Stay hydrated and take care of yourself."
+];
+
+// Placeholder templates
+const placeholderTemplates = [
+  "Finish physics homework chapter 5",
+  "Complete Q3 sales presentation",
+  "Write project proposal for client",
+  "Study for chemistry midterm exam",
+  "Debug authentication flow",
+  "Design new landing page mockups",
+  "Review pull requests from team",
+  "Prepare meeting agenda for tomorrow",
+  "Update portfolio website",
+  "Research market competitors analysis",
+  "Write blog post on productivity",
+  "Fix critical bug in production",
+  "Plan content calendar for next month",
+  "Learn new framework tutorial",
+  "Organize digital files and documents"
+];
 
 const Index = () => {
   const { theme } = useTheme();
@@ -19,10 +81,104 @@ const Index = () => {
   const { whitelist, blocklist } = useLists();
   const [isMonitoring, setIsMonitoring] = useState(false);
 
+  // State for dynamic content
+  const [greeting, setGreeting] = useState("");
+  const [currentQuote, setCurrentQuote] = useState(quotes[Math.floor(Math.random() * quotes.length)]);
+  const [currentTip, setCurrentTip] = useState(tips[0]);
+  const [quoteIndex, setQuoteIndex] = useState(Math.floor(Math.random() * quotes.length));
+  const [tipIndex, setTipIndex] = useState(0);
+
+  // Typing animation state
+  const [placeholderText, setPlaceholderText] = useState("");
+  const [templateIndex, setTemplateIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
+  const [charIndex, setCharIndex] = useState(0);
+
+  // Dummy stats data
+  const stats = {
+    streak: 5,
+    totalTime: "2h 15m",
+    blocksToday: 12
+  };
+
   // Listen for monitoring state changes
   useEffect(() => {
     setIsMonitoring(monitoringState?.isActive || false);
   }, [monitoringState]);
+
+  // Update greeting every minute
+  useEffect(() => {
+    const updateGreeting = () => setGreeting(getGreeting());
+    updateGreeting(); // Initial call
+    const interval = setInterval(updateGreeting, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  // Rotate quotes every 15 seconds with transition
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % quotes.length);
+    }, 15000); // Change every 15 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Update current quote with transition
+  useEffect(() => {
+    setCurrentQuote(quotes[quoteIndex]);
+  }, [quoteIndex]);
+
+  // Rotate tips every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tips.length);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Update current tip
+  useEffect(() => {
+    setCurrentTip(tips[tipIndex]);
+  }, [tipIndex]);
+
+  // Typing animation for placeholder
+  useEffect(() => {
+    const currentTemplate = placeholderTemplates[templateIndex];
+
+    const typingSpeed = isTyping ? 50 : 30; // Typing speed vs backspace speed
+
+    if (isTyping) {
+      if (charIndex < currentTemplate.length) {
+        const timeout = setTimeout(() => {
+          setPlaceholderText(currentTemplate.slice(0, charIndex + 1));
+          setCharIndex(charIndex + 1);
+        }, typingSpeed);
+        return () => clearTimeout(timeout);
+      } else {
+        // Finished typing, wait 3 seconds then start backspacing
+        const timeout = setTimeout(() => {
+          setIsTyping(false);
+        }, 3000);
+        return () => clearTimeout(timeout);
+      }
+    } else {
+      if (charIndex > 0) {
+        const timeout = setTimeout(() => {
+          setPlaceholderText(currentTemplate.slice(0, charIndex - 1));
+          setCharIndex(charIndex - 1);
+        }, typingSpeed);
+        return () => clearTimeout(timeout);
+      } else {
+        // Finished backspacing, move to next template
+        const timeout = setTimeout(() => {
+          setTemplateIndex((prev) => (prev + 1) % placeholderTemplates.length);
+          setIsTyping(true);
+        }, 500); // Brief pause before next template
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [charIndex, isTyping, templateIndex]);
 
   const handleToggleTask = (id: number, enabled: boolean) => {
     setTasks(tasks.map(task => task.id === id ? { ...task, enabled } : task));
@@ -51,7 +207,13 @@ const Index = () => {
 
     // Start monitoring with this goal
     try {
-      await startMonitoring([currentGoal], 25, whitelist, blocklist); // Default 25 minutes
+      console.log('🚀 Starting monitoring with lists:', {
+        whitelist: whitelist,
+        blocklist: blocklist,
+        whitelistCount: whitelist.length,
+        blocklistCount: blocklist.length
+      });
+      await startMonitoring([currentGoal], 25, whitelist, blocklist);
       setIsMonitoring(true);
       setCurrentGoal("");
     } catch (error) {
@@ -88,7 +250,7 @@ const Index = () => {
 
   const handleStartSession = () => {
     // Scroll to the main input
-    const mainInput = document.querySelector('input[placeholder="Finish physics homework chapter 5"]') as HTMLInputElement;
+    const mainInput = document.querySelector('input[placeholder*="working on"]') as HTMLInputElement;
     mainInput?.focus();
   };
 
@@ -124,128 +286,156 @@ const Index = () => {
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-3xl mx-auto space-y-8">
-            {/* Main Focus Input */}
-            <div className="text-center space-y-6">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Target className="w-8 h-8 text-mint" />
-                <h2 className="text-3xl font-bold">What are you working on?</h2>
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-4xl mx-auto p-8">
+            {/* Greeting and Quote Section */}
+            <div className="text-center space-y-4 mb-8">
+              <h1 className="text-3xl font-bold transition-all duration-500 ease-in-out">
+                {greeting}
+              </h1>
+              <div className="transition-all duration-500 ease-in-out opacity-90">
+                <p className="text-lg italic text-muted-foreground">
+                  "{currentQuote.text}" — {currentQuote.author}
+                </p>
               </div>
-
-              <div className="relative">
-                <Input
-                  value={currentGoal}
-                  onChange={(e) => setCurrentGoal(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleStartFocus();
-                    }
-                  }}
-                  placeholder="Finish physics homework chapter 5"
-                  className={`w-full h-16 px-6 text-lg rounded-2xl border-2 transition-all ${
-                    theme === 'dark'
-                      ? 'bg-card border-border focus:border-mint'
-                      : 'bg-white border-gray-300 focus:border-mint'
-                  }`}
-                />
-              </div>
-
-              {!isMonitoring ? (
-                <Button
-                  onClick={handleStartFocus}
-                  disabled={!currentGoal.trim()}
-                  size="lg"
-                  className="h-14 px-8 rounded-2xl bg-gradient-to-r from-mint to-sky hover:scale-[1.02] transition-transform shadow-lg shadow-mint/20 text-base font-semibold"
-                >
-                  Start Focusing
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleStopMonitoring}
-                  size="lg"
-                  className="h-14 px-8 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 hover:scale-[1.02] transition-transform shadow-lg shadow-red-500/30 text-base font-semibold text-white"
-                >
-                  Stop Monitoring
-                  <Square className="w-5 h-5 ml-2" />
-                </Button>
-              )}
             </div>
 
-            {/* Divider */}
-            <div className={`h-px ${theme === 'dark' ? 'bg-border' : 'bg-gray-200'}`} />
+            {/* Stats Bar */}
+            <div className={`rounded-2xl p-6 mb-8 ${
+              theme === 'dark'
+                ? 'bg-card border border-border'
+                : 'bg-white border border-gray-200 shadow-sm'
+            }`}>
+              <div className="flex items-center justify-center gap-10 text-base">
+                <div className="flex items-center gap-3">
+                  <Flame className="w-6 h-6 text-orange-500" />
+                  <span className="font-semibold text-lg">{stats.streak} day streak</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Clock className="w-6 h-6 text-blue-500" />
+                  <span className="font-semibold text-lg">{stats.totalTime}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Shield className="w-6 h-6 text-green-500" />
+                  <span className="font-semibold text-lg">{stats.blocksToday} blocks today</span>
+                </div>
+              </div>
+            </div>
 
-            {/* Recent Tasks */}
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Recent Tasks</h3>
-              <div className="space-y-3">
-                {tasks.length === 0 ? (
-                  <div className={`p-8 rounded-2xl text-center ${
-                    theme === 'dark' ? 'bg-card' : 'bg-gray-50'
-                  }`}>
-                    <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
-                      <Plus className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-muted-foreground">
-                      No recent tasks. Start by adding your first task above.
-                    </p>
-                  </div>
-                ) : (
-                  tasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${
-                        theme === 'dark'
-                          ? 'bg-card border-border hover:border-mint/50'
-                          : 'bg-white border-gray-200 hover:border-mint/50'
-                      }`}
+            {/* Main Focus Section */}
+            <div className={`rounded-2xl p-8 mb-8 ${
+              theme === 'dark'
+                ? 'bg-card border border-border'
+                : 'bg-white border border-gray-200 shadow-sm'
+            }`}>
+              <div className="text-center space-y-6">
+                <div className="flex items-center justify-center gap-2">
+                  <Target className="w-6 h-6 text-mint" />
+                  <h2 className="text-2xl font-semibold">What are you working on?</h2>
+                </div>
+
+                <div className="relative max-w-2xl mx-auto">
+                  <Input
+                    value={currentGoal}
+                    onChange={(e) => setCurrentGoal(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleStartFocus();
+                      }
+                    }}
+                    placeholder={placeholderText || "What are you working on?"}
+                    className={`w-full h-14 px-6 text-lg rounded-xl border-2 transition-all ${
+                      theme === 'dark'
+                        ? 'bg-muted border-border focus:border-mint'
+                        : 'bg-gray-50 border-gray-300 focus:border-mint'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex justify-center">
+                  {!isMonitoring ? (
+                    <Button
+                      onClick={handleStartFocus}
+                      disabled={!currentGoal.trim()}
+                      size="lg"
+                      className="h-12 px-8 rounded-xl bg-gradient-to-r from-mint to-sky hover:scale-[1.02] transition-transform shadow-lg shadow-mint/20 text-base font-semibold"
                     >
-                      <div className="flex-1">
-                        <p className="font-medium">{task.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {task.enabled ? 'Active' : 'Inactive'}
+                      Start Focusing
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleStopMonitoring}
+                      size="lg"
+                      className="h-12 px-8 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 hover:scale-[1.02] transition-transform shadow-lg shadow-red-500/30 text-base font-semibold text-white"
+                    >
+                      Stop Monitoring
+                      <Square className="w-5 h-5 ml-2" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Tasks and Tips Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Recent Tasks */}
+              <div className="lg:col-span-2">
+                <div className={`rounded-2xl p-6 ${
+                  theme === 'dark'
+                    ? 'bg-card border border-border'
+                    : 'bg-white border border-gray-200 shadow-sm'
+                }`}>
+                  <h3 className="text-xl font-semibold mb-4">📋 Recent Tasks</h3>
+                  <div className="space-y-3">
+                    {tasks.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">
+                          No recent tasks. Start by adding your first task above.
                         </p>
                       </div>
-                      <Button
-                        onClick={() => handleQuickStartTask(task.title)}
-                        size="sm"
-                        variant="outline"
-                        className="rounded-xl"
-                      >
-                        <Play className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))
-                )}
+                    ) : (
+                      tasks.slice(0, 5).map((task) => (
+                        <div
+                          key={task.id}
+                          className={`flex items-center justify-between p-3 rounded-lg transition-all hover:shadow-sm ${
+                            theme === 'dark'
+                              ? 'bg-muted/50 hover:bg-muted'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium">{task.title}</p>
+                          </div>
+                          <Button
+                            onClick={() => handleQuickStartTask(task.title)}
+                            size="sm"
+                            variant="ghost"
+                            className="rounded-lg h-8 w-8 p-0"
+                          >
+                            <Play className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Divider */}
-            <div className={`h-px ${theme === 'dark' ? 'bg-border' : 'bg-gray-200'}`} />
-
-            {/* Tips Section */}
-            <div className={`p-6 rounded-2xl ${
-              theme === 'dark' ? 'bg-card border border-border' : 'bg-gradient-to-br from-mint/10 to-sky/10'
-            }`}>
-              <div className="flex items-center gap-2 mb-4">
-                <Lightbulb className="w-6 h-6 text-mint" />
-                <h3 className="text-lg font-semibold">Tips</h3>
+              {/* Quick Tip */}
+              <div className={`rounded-2xl p-6 ${
+                theme === 'dark'
+                  ? 'bg-card border border-border'
+                  : 'bg-gradient-to-br from-mint/10 to-sky/10 border border-mint/20'
+              }`}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Lightbulb className="w-5 h-5 text-mint" />
+                  <h3 className="text-lg font-semibold">💡 Quick Tip</h3>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed transition-all duration-500 ease-in-out">
+                  {currentTip}
+                </p>
               </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-mint mt-1">•</span>
-                  <span>Work until your task is done</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-mint mt-1">•</span>
-                  <span>Take breaks when you need them</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-mint mt-1">•</span>
-                  <span>Enable Pomodoro for structured sessions</span>
-                </li>
-              </ul>
             </div>
           </div>
         </main>

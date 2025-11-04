@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { MonitoringProvider } from "@/contexts/MonitoringContext";
 import { ListsProvider } from "@/contexts/ListsContext";
 import Lists from "./pages/Lists";
+import PageTransition from "./components/PageTransition";
 
 const queryClient = new QueryClient();
 
@@ -25,11 +26,11 @@ const App = () => (
             <HashRouter>
               <AppLayout>
                 <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/lists" element={<Lists />} />
+                  <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+                  <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+                  <Route path="/lists" element={<PageTransition><Lists /></PageTransition>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
+                  <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
                 </Routes>
               </AppLayout>
             </HashRouter>
