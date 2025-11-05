@@ -23,7 +23,7 @@ export const quotes: Quote[] = [
   { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
   { text: "Everything you've ever wanted is on the other side of fear.", author: "George Addair" },
   { text: "Believe in yourself. You are braver than you think, more talented than you know, and capable of more than you imagine.", author: "Roy T. Bennett" },
-  { text: "Don't be pushed around by the fears in your mind. Be led by the dreams in your heart.", author: "Roy T. Bennett" }
+  { text: "Don't be pushed around by the fears in your mind. Be led by the dreams in your heart.", author: "Roy T. Bennett" },
   { text: "The best way to predict the future is to create it.", author: "Peter Drucker" },
   { text: "The only limit to our realization of tomorrow will be our doubts of today.", author: "Franklin D. Roosevelt" },
   { text: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu" },

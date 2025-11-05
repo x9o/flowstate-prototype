@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { UserDropdown } from "@/components/Dropdown";
 import { MonitoringStatus } from "@/components/MonitoringStatus";
 import { Sidebar } from "@/components/Sidebar";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TaskValidationDialog } from "@/components/TaskValidationDialog";
+import { taskValidationService } from "@/services/TaskValidationService";
 import { quotes } from '@/data/quotes';
 
 // Time-based greetings
@@ -62,6 +65,7 @@ const placeholderTemplates = [
 ];
 
 const Index = () => {
+  console.log('🏠 Index component loaded - task validation should be working');
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
@@ -69,6 +73,20 @@ const Index = () => {
   const { startMonitoring, stopMonitoring, monitoringState } = useMonitoring();
   const { whitelist, blocklist } = useLists();
   const [isMonitoring, setIsMonitoring] = useState(false);
+
+  // Debug: Log lists on every render to see what data we have
+  console.log('📋 Current lists state:', {
+    whitelistLength: whitelist.length,
+    blocklistLength: blocklist.length,
+    whitelistItems: whitelist.map(item => ({ name: item.name, pattern: item.pattern })),
+    blocklistItems: blocklist.map(item => ({ name: item.name, pattern: item.pattern }))
+  });
+
+  // Task validation state
+  const [isValidatingTask, setIsValidatingTask] = useState(false);
+  const [showValidationDialog, setShowValidationDialog] = useState(false);
+  const [originalTask, setOriginalTask] = useState("");
+  const [validationType, setValidationType] = useState<'client' | 'ai'>('ai');
 
   // State for dynamic content
   const [greeting, setGreeting] = useState("");
@@ -178,15 +196,58 @@ const Index = () => {
   };
 
   const handleStartFocus = async () => {
+    console.log('🚀 handleStartFocus called! currentGoal:', currentGoal);
     if (!currentGoal.trim()) return;
 
+    const trimmedTask = currentGoal.trim();
+    console.log('🔍 Starting task validation for:', trimmedTask);
+
+    // Client-side validation: minimum 3 characters
+    if (trimmedTask.length < 3) {
+      console.log('❌ Client validation failed: task too short');
+      setOriginalTask(trimmedTask);
+      setValidationType('client');
+      setShowValidationDialog(true);
+      return;
+    }
+
+    console.log('✅ Client validation passed, starting AI validation...');
+    setIsValidatingTask(true);
+
+    try {
+      // Validate the task using AI
+      const validation = await taskValidationService.validateTask(trimmedTask);
+      console.log('🤖 AI validation result:', validation);
+
+      if (validation.isValid) {
+        // Task is valid, proceed with monitoring
+        console.log('✅ Task validation PASSED, proceeding with monitoring for:', trimmedTask);
+        proceedWithMonitoring(trimmedTask);
+      } else {
+        // Task is invalid, show validation dialog
+        console.log('❌ Task validation FAILED, showing dialog for:', trimmedTask);
+        setOriginalTask(trimmedTask);
+        setValidationType('ai');
+        setShowValidationDialog(true);
+      }
+    } catch (error) {
+      console.error('❌ ERROR in task validation:', error);
+      console.log('⚠️ FALLBACK: Proceeding with monitoring due to validation error');
+      // If validation fails, proceed anyway (fallback)
+      proceedWithMonitoring(trimmedTask);
+    } finally {
+      setIsValidatingTask(false);
+    }
+  };
+
+  const proceedWithMonitoring = (task: string) => {
     // Add current goal as a task
     const colors = ["mint", "indigo", "peach", "sky", "lavender"] as const;
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
     const newTask = {
       id: Date.now(),
-      title: currentGoal,
+      title: task,
       tag: "CURRENT",
       color: randomColor,
       enabled: true,
@@ -195,19 +256,44 @@ const Index = () => {
     setTasks([newTask, ...tasks]);
 
     // Start monitoring with this goal
+    startMonitoringForTask(task);
+  };
+
+  const startMonitoringForTask = async (task: string) => {
     try {
-      console.log('🚀 Starting monitoring with lists:', {
+      console.log('🚀 Starting monitoring with validated task:', task);
+      console.log('🚀 Monitoring lists:', {
         whitelist: whitelist,
         blocklist: blocklist,
         whitelistCount: whitelist.length,
         blocklistCount: blocklist.length
       });
-      await startMonitoring([currentGoal], 25, whitelist, blocklist);
+      console.log('📋 Whitelist items being passed:', whitelist.map(item => ({ name: item.name, pattern: item.pattern })));
+      console.log('🚫 Blocklist items being passed:', blocklist.map(item => ({ name: item.name, pattern: item.pattern })));
+
+      await startMonitoring([task], 25, whitelist, blocklist);
       setIsMonitoring(true);
       setCurrentGoal("");
     } catch (error) {
       console.error('Failed to start monitoring:', error);
     }
+  };
+
+  const handleTaskRetry = (newTask: string) => {
+    setShowValidationDialog(false);
+    setCurrentGoal(newTask);
+    setOriginalTask("");
+
+    // Auto-trigger validation for the new task
+    setTimeout(() => {
+      handleStartFocus();
+    }, 100);
+  };
+
+  const handleValidationCancel = () => {
+    setShowValidationDialog(false);
+    setOriginalTask("");
+    setValidationType('ai'); // Reset to default
   };
 
   const handleStopMonitoring = async () => {
@@ -220,11 +306,41 @@ const Index = () => {
   };
 
   const handleQuickStartTask = async (taskTitle: string) => {
+    console.log('🔍 Quick start task validation for:', taskTitle);
+
+    // Client-side validation: minimum 3 characters
+    if (taskTitle.trim().length < 3) {
+      console.log('❌ Quick start task validation failed: task too short');
+      return;
+    }
+
+    setIsValidatingTask(true);
+
     try {
+      // Validate the task using AI
+      const validation = await taskValidationService.validateTask(taskTitle.trim());
+      console.log('🤖 Quick start AI validation result:', validation);
+
+      if (validation.isValid) {
+        // Task is valid, proceed with monitoring
+        console.log('✅ Quick start task validation PASSED, proceeding with monitoring for:', taskTitle);
+        await startMonitoring([taskTitle], 25, whitelist, blocklist);
+        setIsMonitoring(true);
+      } else {
+        // Task is invalid, show validation dialog
+        console.log('❌ Quick start task validation FAILED, showing dialog for:', taskTitle);
+        setOriginalTask(taskTitle);
+        setValidationType('ai');
+        setShowValidationDialog(true);
+      }
+    } catch (error) {
+      console.error('❌ ERROR in quick start task validation:', error);
+      console.log('⚠️ FALLBACK: Proceeding with monitoring due to validation error');
+      // If validation fails, proceed anyway (fallback)
       await startMonitoring([taskTitle], 25, whitelist, blocklist);
       setIsMonitoring(true);
-    } catch (error) {
-      console.error('Failed to start monitoring:', error);
+    } finally {
+      setIsValidatingTask(false);
     }
   };
 
@@ -343,15 +459,21 @@ const Index = () => {
 
                 <div className="flex justify-center">
                   {!isMonitoring ? (
-                    <Button
-                      onClick={handleStartFocus}
-                      disabled={!currentGoal.trim()}
-                      size="lg"
-                      className="h-12 px-8 rounded-xl bg-gradient-to-r from-mint to-sky hover:scale-[1.02] transition-transform shadow-lg shadow-mint/20 text-base font-semibold"
-                    >
-                      Start Focusing
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      {isValidatingTask ? (
+                        <LoadingSpinner size="md" text="Validating task..." />
+                      ) : (
+                        <Button
+                          onClick={handleStartFocus}
+                          disabled={!currentGoal.trim() || isValidatingTask}
+                          size="lg"
+                          className="h-12 px-8 rounded-xl bg-gradient-to-r from-mint to-sky hover:scale-[1.02] transition-transform shadow-lg shadow-mint/20 text-base font-semibold"
+                        >
+                          Start Focusing
+                          <ArrowRight className="w-5 h-5 ml-2" />
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <Button
                       onClick={handleStopMonitoring}
@@ -435,6 +557,15 @@ const Index = () => {
 
       {/* Monitoring Status Overlay */}
       <MonitoringStatus />
+
+      {/* Task Validation Dialog */}
+      <TaskValidationDialog
+        isOpen={showValidationDialog}
+        originalTask={originalTask}
+        validationType={validationType}
+        onRetry={handleTaskRetry}
+        onCancel={handleValidationCancel}
+      />
     </div>
   );
 };

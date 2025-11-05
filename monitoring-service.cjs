@@ -114,13 +114,18 @@ async function checkProductivity(goal, windowInfo, sendToRenderer) {
   // Create cache key
   const goalString = goal.toLowerCase().trim();
   const cacheKey = `${goalString}:::${enhancedInfo.formattedInfo.toLowerCase().trim()}`;
+  console.log(`CACHE KEY: Generated cache key: "${cacheKey}"`);
+  console.log(`CACHE: Current cache size: ${productivityCache.size} entries`);
 
   // Check cache first
   if (productivityCache.has(cacheKey)) {
     const cachedResult = productivityCache.get(cacheKey);
-    console.log(`📋 Using cached verdict: ${cachedResult ? 'YES' : 'NO'}`);
+    console.log(`CACHE: HIT - Using cached verdict: ${cachedResult ? 'YES' : 'NO'} for key: ${cacheKey}`);
     updateStats(enhancedInfo, cachedResult);
     return cachedResult;
+  } else {
+    console.log(`CACHE: MISS - No cached result for key: ${cacheKey}`);
+    console.log(`CACHE: Current cache entries:`, Array.from(productivityCache.entries()));
   }
 
   const prompt = `${SYSTEM_PROMPT}
@@ -131,18 +136,18 @@ ${enhancedInfo.formattedInfo}
 YOUR RESPONSE:`;
 
   try {
-    console.log("🤖 Calling AI API for new verdict...");
+    console.log("AI: Calling AI API for new verdict...");
     const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     const response = await model.generateContent(prompt);
 
     const aiResponse = response.response.text()?.trim() || "";
-    console.log(`🤖 AI Response: ${aiResponse}`);
+    console.log(`AI: Response: ${aiResponse}`);
 
     const isProductive = aiResponse.toUpperCase() === "YES";
 
     // Cache the result
     productivityCache.set(cacheKey, isProductive);
-    console.log(`💾 Cached verdict for future reference`);
+    console.log(`CACHE: Cached verdict for future reference: ${isProductive ? 'YES' : 'NO'} for key: ${cacheKey}`);
 
     updateStats(enhancedInfo, isProductive);
 
@@ -166,7 +171,7 @@ YOUR RESPONSE:`;
 
     return isProductive;
   } catch (error) {
-    console.error(`❌ Error calling Gemini API: ${error}`);
+    console.error(`ERROR: Failed to call Gemini API: ${error}`);
     updateStats(enhancedInfo, true);
     return true;
   }
@@ -184,8 +189,8 @@ async function checkWhitelistAndCache(goal, enhancedInfo, __dirname) {
 
     if (fileExists) {
       const whitelistedActivity = await fs.readFile(whitelistFile, 'utf8');
-      console.log(`🔍 Found whitelist file with content: "${whitelistedActivity.trim()}"`);
-      console.log(`🔍 Comparing with current window: "${enhancedInfo.title.trim()}"`);
+      console.log(`CHECK: Found whitelist file with content: "${whitelistedActivity.trim()}"`);
+      console.log(`CHECK: Comparing with current window: "${enhancedInfo.title.trim()}"`);
 
       // Flexible matching - check if the whitelist content matches the window
       const windowTitle = enhancedInfo.title.trim().toLowerCase();
@@ -206,20 +211,20 @@ async function checkWhitelistAndCache(goal, enhancedInfo, __dirname) {
 
         // Force update cache to YES
         productivityCache.set(cacheKey, true);
-        console.log(`✅ User marked "${enhancedInfo.title}" in ${enhancedInfo.owner.name} as productive - updated cache to YES`);
-        console.log(`🔑 Cache key: ${cacheKey}`);
+        console.log(`SUCCESS: User marked "${enhancedInfo.title}" in ${enhancedInfo.owner.name} as productive - updated cache to YES`);
+        console.log(`CACHE KEY: ${cacheKey}`);
 
         // Clean up whitelist file after processing
         await fs.unlink(whitelistFile);
-        console.log(`🗑️ Cleaned up whitelist file`);
+        console.log(`CLEANUP: Removed whitelist file`);
 
         return true; // Indicate that whitelist was processed
       } else {
-        console.log(`❌ No match found between whitelist and current window`);
+        console.log(`CHECK: No match found between whitelist and current window`);
       }
     }
   } catch (error) {
-    console.log(`ℹ️ No whitelist override found or error reading whitelist file: ${error.message}`);
+    console.log(`INFO: No whitelist override found or error reading whitelist file: ${error.message}`);
   }
 
   return false; // No whitelist processed
@@ -230,7 +235,7 @@ async function checkWhitelistAndCache(goal, enhancedInfo, __dirname) {
  */
 async function showBlockingOverlay(goal, windowInfo, __dirname) {
   console.log("\n" + "=".repeat(50));
-  console.log("🚫 BLOCKING ACTIVITY - NOT PRODUCTIVE!");
+  console.log("BLOCKED: Activity not productive - showing blocking overlay!");
   console.log("=".repeat(50));
   console.log(`Window: ${windowInfo.title}`);
   console.log(`App: ${windowInfo.owner.name}`);
@@ -263,7 +268,7 @@ async function showBlockingOverlay(goal, windowInfo, __dirname) {
     });
 
     electronProcess.on('close', async () => {
-      console.log("✅ Blocking screen dismissed\n");
+      console.log("SUCCESS: Blocking screen dismissed\n");
 
       // Check if user marked the activity as productive
       const enhancedInfo = getEnhancedActivityDescription(windowInfo);
@@ -273,7 +278,7 @@ async function showBlockingOverlay(goal, windowInfo, __dirname) {
     });
 
     electronProcess.on('error', (error) => {
-      console.error(`❌ Failed to show blocking screen: ${error.message}`);
+      console.error(`ERROR: Failed to show blocking screen: ${error.message}`);
       resolve();
     });
   });
@@ -286,6 +291,10 @@ function checkLists(windowTitle, appName, url, whitelist, blocklist) {
   const lowerTitle = windowTitle.toLowerCase();
   const lowerApp = appName.toLowerCase();
   const lowerUrl = url?.toLowerCase() || '';
+
+  console.log(`CHECK: Checking lists for: "${lowerTitle}" (${lowerApp})`);
+  console.log(`LIST: Whitelist has ${whitelist.length} items:`, whitelist.map(w => ({name: w.name, pattern: w.pattern})));
+  console.log(`LIST: Blocklist has ${blocklist.length} items:`, blocklist.map(b => ({name: b.name, pattern: b.pattern})));
 
   // Check blocklist first - if blocked, always block
   for (const item of blocklist) {
@@ -303,11 +312,14 @@ function checkLists(windowTitle, appName, url, whitelist, blocklist) {
   // Check whitelist - if whitelisted, always allow
   for (const item of whitelist) {
     const patterns = item.pattern.toLowerCase().split('|');
+    console.log(`CHECK: Testing whitelist item: ${item.name} with patterns:`, patterns);
     for (const pattern of patterns) {
       const trimmedPattern = pattern.trim();
+      console.log(`CHECK: Testing pattern "${trimmedPattern}" against app "${lowerApp}" and title "${lowerTitle}"`);
       if (lowerTitle.includes(trimmedPattern) ||
           lowerApp.includes(trimmedPattern) ||
           lowerUrl.includes(trimmedPattern)) {
+        console.log(`ALLOWED: WHITELISTED - Matched pattern "${trimmedPattern}" in ${item.name}`);
         return { type: 'whitelisted', item };
       }
     }
@@ -323,10 +335,10 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
   const goal = goals[0]; // Use first goal
   sessionStats.sessionStartTime = Date.now();
 
-  console.log(`🎯 Starting monitoring for goal: ${goal}`);
-  console.log(`⏱️ Duration: ${duration} minutes`);
-  console.log(`📋 Whitelist: ${whitelist.length} items`);
-  console.log(`🚫 Blocklist: ${blocklist.length} items`);
+  console.log(`GOAL: Starting monitoring for goal: ${goal}`);
+  console.log(`DURATION: ${duration} minutes`);
+  console.log(`LIST: Whitelist: ${whitelist.length} items`);
+  console.log(`LIST: Blocklist: ${blocklist.length} items`);
 
   let previousWindow = null;
   const pollInterval = 1000; // Check every second
@@ -341,7 +353,7 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
           // Check if window is FlowState itself - always whitelist
           if (currentWindow.owner.name.toLowerCase().includes('flowstate') ||
               currentWindow.title.toLowerCase().includes('flowstate')) {
-            console.log('✅ FlowState detected - whitelisted');
+            console.log('ALLOWED: FlowState detected - whitelisted');
             await new Promise(resolve => setTimeout(resolve, pollInterval));
             continue;
           }
@@ -351,7 +363,7 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
               currentWindow.title !== previousWindow.title ||
               currentWindow.owner.name !== previousWindow.owner.name) {
 
-            console.log(`\n🔍 Window: ${currentWindow.title} (${currentWindow.owner.name})`);
+            console.log(`\nCHECK: Window: ${currentWindow.title} (${currentWindow.owner.name})`);
 
             // Check whitelist/blocklist first
             const listCheck = checkLists(
@@ -365,7 +377,7 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
             const enhancedInfo = getEnhancedActivityDescription(currentWindow);
 
             if (listCheck.type === 'blocked') {
-              console.log(`🚫 BLOCKLISTED: ${listCheck.item.name} - always blocked`);
+              console.log(`BLOCKED: BLOCKLISTED - ${listCheck.item.name} - always blocked`);
               updateStats(enhancedInfo, false);
 
               // Send block event to renderer
@@ -379,25 +391,25 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
 
               await showBlockingOverlay(goal, currentWindow, __dirname);
             } else if (listCheck.type === 'whitelisted') {
-              console.log(`✅ WHITELISTED: ${listCheck.item.name} - always allowed`);
+              console.log(`ALLOWED: WHITELISTED - ${listCheck.item.name} - always allowed`);
               updateStats(enhancedInfo, true);
-              console.log("✅ Productive activity (whitelisted) - continuing...\n");
+              console.log("SUCCESS: Productive activity (whitelisted) - continuing...\n");
             } else {
               // Check whitelist file override (from "mark as productive" button)
-              console.log("🔍 Checking whitelist file override...");
+              console.log("CHECK: Checking whitelist file override...");
               const whitelistProcessed = await checkWhitelistAndCache(goal, enhancedInfo, __dirname);
 
               if (whitelistProcessed) {
-                console.log("✅ Whitelist override applied - activity marked as productive");
+                console.log("SUCCESS: Whitelist override applied - activity marked as productive");
                 updateStats(enhancedInfo, true);
-                console.log("✅ Productive activity (whitelisted) - continuing...\n");
+                console.log("SUCCESS: Productive activity (whitelisted) - continuing...\n");
               } else {
                 // Check with AI
-                console.log("🤔 Checking productivity with AI...");
+                console.log("AI CHECK: Checking productivity with AI...");
                 const isProductive = await checkProductivity(goal, currentWindow, sendToRenderer);
 
                 if (isProductive) {
-                  console.log("✅ Productive activity\n");
+                  console.log("SUCCESS: Productive activity\n");
                 } else {
                   // Send block event to renderer
                   if (sendToRenderer) {
@@ -419,7 +431,7 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
 
         await new Promise(resolve => setTimeout(resolve, pollInterval));
       } catch (error) {
-        console.error(`❌ Error in monitoring loop: ${error}`);
+        console.error(`ERROR: Error in monitoring loop: ${error}`);
         await new Promise(resolve => setTimeout(resolve, pollInterval));
       }
     }
@@ -431,7 +443,7 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
   return {
     stop: () => {
       isRunning = false;
-      console.log('🛑 Monitoring stopped');
+      console.log('STOP: Monitoring stopped');
     },
     getStats: () => sessionStats,
   };

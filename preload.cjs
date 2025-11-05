@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getTheme: () => ipcRenderer.invoke('get-theme'),
 
   // Monitoring controls
-  startMonitoring: (goals, duration) => ipcRenderer.invoke('start-monitoring', goals, duration),
+  startMonitoring: (goals, duration, whitelist, blocklist) => ipcRenderer.invoke('start-monitoring', goals, duration, whitelist, blocklist),
   stopMonitoring: () => ipcRenderer.invoke('stop-monitoring'),
   getMonitoringStatus: () => ipcRenderer.invoke('get-monitoring-status'),
 

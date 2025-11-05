@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run electron:dev:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

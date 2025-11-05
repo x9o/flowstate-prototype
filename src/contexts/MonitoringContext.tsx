@@ -37,6 +37,15 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
   // Start monitoring session
   const startMonitoring = async (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]): Promise<void> => {
     try {
+      console.log('🔗 MonitoringContext.startMonitoring called with:', {
+        goals,
+        duration,
+        whitelistLength: whitelist?.length || 0,
+        blocklistLength: blocklist?.length || 0,
+        whitelistItems: whitelist?.map(item => ({ name: item.name, pattern: item.pattern })) || [],
+        blocklistItems: blocklist?.map(item => ({ name: item.name, pattern: item.pattern })) || []
+      });
+
       const result = await window.electronAPI.startMonitoring(goals, duration, whitelist, blocklist);
       if (!result.success) {
         throw new Error(result.error || 'Failed to start monitoring');
