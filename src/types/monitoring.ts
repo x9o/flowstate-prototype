@@ -4,6 +4,9 @@ export interface WindowInfo {
   category: string;
   url?: string;
   memoryUsage?: number;
+  owner?: {
+    name: string;
+  };
 }
 
 export interface AppCount {
@@ -42,9 +45,9 @@ export interface MonitoringStatusChange {
 }
 
 export interface ActivityBlockedEvent {
-  window: string;
-  app: string;
-  category: string;
+  windowInfo: WindowInfo;
+  goal: string;
+  timestamp: number;
 }
 
 export interface MonitoringErrorEvent {

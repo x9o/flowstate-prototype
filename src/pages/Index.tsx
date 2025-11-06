@@ -101,7 +101,7 @@ const Index = () => {
   const { toggleSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
   const [currentGoal, setCurrentGoal] = useState("");
-  const { startMonitoring, stopMonitoring, pauseMonitoring, resumeMonitoring, monitoringState, isPaused } = useMonitoring();
+  const { startMonitoring, stopMonitoring, pauseMonitoring, resumeMonitoring, monitoringState, isPaused, recentBlockedApps } = useMonitoring();
   const { whitelist, blocklist } = useLists();
   const [isMonitoring, setIsMonitoring] = useState(false);
 
@@ -333,6 +333,7 @@ const Index = () => {
     try {
       await stopMonitoring();
       setIsMonitoring(false);
+      setCurrentGoal(""); // Clear the goal when stopping
     } catch (error) {
       console.error('Failed to stop monitoring:', error);
     }
@@ -362,6 +363,39 @@ const Index = () => {
     }
     return 0;
   };
+
+  // Format time for display
+  const formatTime = (milliseconds: number) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // State for live timer
+  const [sessionTime, setSessionTime] = useState(0);
+
+  // Update timer every second when monitoring is active
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isMonitoring && monitoringState.sessionStats.sessionStartTime) {
+      interval = setInterval(() => {
+        setSessionTime(Date.now() - monitoringState.sessionStats.sessionStartTime);
+      }, 1000);
+    } else {
+      setSessionTime(0);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isMonitoring, monitoringState.sessionStats.sessionStartTime]);
 
   const handleQuickStartTask = async (taskTitle: string) => {
     console.log('🔍 Quick start task validation for:', taskTitle);
@@ -445,155 +479,246 @@ const Index = () => {
           />
         </div>
 
-        {/* Main Content - Clean and Centered */}
+        {/* Main Content - Dynamic based on monitoring state */}
         <main className="flex-1 flex items-center justify-center p-8">
           <div className="w-full max-w-3xl">
             <div className="text-center space-y-8">
-              {/* Main Header - Greeting */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-center gap-3">
-                  {greetingIcon === 'sun' ? (
-                    <Sun className="w-12 h-12 text-amber-500" />
-                  ) : (
-                    <Moon className="w-12 h-12 text-indigo-400" />
-                  )}
-                  <h1 className="text-5xl font-bold transition-all duration-500 ease-in-out">
-                    {greeting}
-                  </h1>
-                </div>
-                {/* Subheader - Prompt */}
-                <p className="text-xl text-muted-foreground">
-                  {prompt}
-                </p>
-              </div>
+              {isMonitoring ? (
+                // Monitoring State UI
+                <div className="space-y-8">
+                  {/* Session Timer Display */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <Clock className="w-12 h-12 text-mint" />
+                      <h1 className="text-6xl font-bold text-mint font-mono">
+                        {formatTime(sessionTime)}
+                      </h1>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-semibold text-foreground">
+                        {monitoringState.currentGoals[0] || "Focus Session"}
+                      </h2>
+                      <p className="text-lg text-muted-foreground">
+                        Stay focused! {isPaused ? '(Paused)' : 'Monitoring active'}
+                      </p>
+                    </div>
+                  </div>
 
-              {/* Input with icons inside */}
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <button
-                    className={`p-2 rounded-lg transition-colors ${
-                      theme === 'dark'
-                        ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
-                  <button
-                    className={`p-2 rounded-lg transition-colors ${
-                      theme === 'dark'
-                        ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    <Shuffle className="w-5 h-5" />
-                  </button>
-                  <button
-                    className={`p-2 rounded-lg transition-colors ${
-                      theme === 'dark'
-                        ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    <History className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <Input
-                  value={currentGoal}
-                  onChange={(e) => setCurrentGoal(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleStartFocus();
-                    }
-                  }}
-                  placeholder={placeholderText || "What are you working on?"}
-                  className={`w-full h-16 pl-40 pr-20 text-lg rounded-2xl border-2 transition-all ${
-                    theme === 'dark'
-                      ? 'bg-muted/50 border-border focus:border-mint backdrop-blur-sm'
-                      : 'bg-white/80 border-gray-300 focus:border-mint backdrop-blur-sm'
-                  }`}
-                />
-
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  {isValidatingTask ? (
-                    <LoadingSpinner size="sm" />
-                  ) : (
+                  {/* Stop Button */}
+                  <div className="flex justify-center">
                     <button
-                      onClick={handleStartFocus}
-                      disabled={!currentGoal.trim() || isValidatingTask}
-                      className={`p-2 rounded-lg transition-all ${
-                        currentGoal.trim() && !isValidatingTask
-                          ? 'bg-gradient-to-r from-mint to-sky hover:scale-105 text-white shadow-md'
-                          : theme === 'dark'
-                            ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      onClick={handleStopMonitoring}
+                      className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-lg font-semibold transition-all hover:scale-105 ${
+                        theme === 'dark'
+                          ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg'
+                          : 'bg-red-500 hover:bg-red-600 text-white shadow-lg'
                       }`}
                     >
-                      <ArrowUp className="w-5 h-5" />
+                      <Square className="w-6 h-6" />
+                      Stop Session
                     </button>
+                  </div>
+
+                  {/* Session Stats */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className={`p-4 rounded-xl ${
+                      theme === 'dark' ? 'bg-card' : 'bg-gray-50'
+                    }`}>
+                      <div className="text-2xl font-bold text-sky">{monitoringState.sessionStats.blockedAttempts}</div>
+                      <div className="text-sm text-muted-foreground">Blocked</div>
+                    </div>
+                    <div className={`p-4 rounded-xl ${
+                      theme === 'dark' ? 'bg-card' : 'bg-gray-50'
+                    }`}>
+                      <div className="text-2xl font-bold text-mint">{monitoringState.sessionStats.totalChecks}</div>
+                      <div className="text-sm text-muted-foreground">Checks</div>
+                    </div>
+                    <div className={`p-4 rounded-xl ${
+                      theme === 'dark' ? 'bg-card' : 'bg-gray-50'
+                    }`}>
+                      <div className="text-2xl font-bold text-peach">{formatTime(sessionTime)}</div>
+                      <div className="text-sm text-muted-foreground">Duration</div>
+                    </div>
+                  </div>
+
+                  {/* Recent Blocked Apps */}
+                  {recentBlockedApps.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-muted-foreground">Recently Blocked</h3>
+                      <div className="space-y-2">
+                        {recentBlockedApps.map((app, index) => (
+                          <div
+                            key={`${app.blockedAt}-${index}`}
+                            className={`flex items-center justify-between p-3 rounded-lg ${
+                              theme === 'dark' ? 'bg-card' : 'bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Shield className="w-5 h-5 text-red-500" />
+                              <div className="text-left">
+                                <div className="font-medium">{app.windowTitle}</div>
+                                <div className="text-sm text-muted-foreground">{app.appName}</div>
+                              </div>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatTime(Date.now() - app.blockedAt)} ago
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
-
-              {/* Placeholder Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-                <button
-                  onClick={() => console.log('Recent clicked')}
-                  className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
-                    theme === 'dark'
-                      ? 'bg-card border-border hover:border-mint'
-                      : 'bg-white border-gray-200 hover:border-mint'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <History className="w-5 h-5 text-mint" />
-                    <span className="text-sm font-medium">Recent</span>
+              ) : (
+                // Normal State UI
+                <div className="space-y-8">
+                  {/* Main Header - Greeting */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center gap-3">
+                      {greetingIcon === 'sun' ? (
+                        <Sun className="w-12 h-12 text-amber-500" />
+                      ) : (
+                        <Moon className="w-12 h-12 text-indigo-400" />
+                      )}
+                      <h1 className="text-5xl font-bold transition-all duration-500 ease-in-out">
+                        {greeting}
+                      </h1>
+                    </div>
+                    {/* Subheader - Prompt */}
+                    <p className="text-xl text-muted-foreground">
+                      {prompt}
+                    </p>
                   </div>
-                </button>
 
-                <button
-                  onClick={() => navigate('/lists')}
-                  className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
-                    theme === 'dark'
-                      ? 'bg-card border-border hover:border-lavender'
-                      : 'bg-white border-gray-200 hover:border-lavender'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <List className="w-5 h-5 text-lavender" />
-                    <span className="text-sm font-medium">Lists</span>
-                  </div>
-                </button>
+                  {/* Input with icons inside */}
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      <button
+                        className={`p-2 rounded-lg transition-colors ${
+                          theme === 'dark'
+                            ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                            : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+                        }`}
+                      >
+                        <Plus className="w-5 h-5" />
+                      </button>
+                      <button
+                        className={`p-2 rounded-lg transition-colors ${
+                          theme === 'dark'
+                            ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                            : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+                        }`}
+                      >
+                        <Shuffle className="w-5 h-5" />
+                      </button>
+                      <button
+                        className={`p-2 rounded-lg transition-colors ${
+                          theme === 'dark'
+                            ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                            : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+                        }`}
+                      >
+                        <History className="w-5 h-5" />
+                      </button>
+                    </div>
 
-                <button
-                  onClick={() => console.log('Stats clicked')}
-                  className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
-                    theme === 'dark'
-                      ? 'bg-card border-border hover:border-sky'
-                      : 'bg-white border-gray-200 hover:border-sky'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-sky" />
-                    <span className="text-sm font-medium">Stats</span>
-                  </div>
-                </button>
+                    <Input
+                      value={currentGoal}
+                      onChange={(e) => setCurrentGoal(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleStartFocus();
+                        }
+                      }}
+                      placeholder={placeholderText || "What are you working on?"}
+                      className={`w-full h-16 pl-40 pr-20 text-lg rounded-2xl border-2 transition-all ${
+                        theme === 'dark'
+                          ? 'bg-muted/50 border-border focus:border-mint backdrop-blur-sm'
+                          : 'bg-white/80 border-gray-300 focus:border-mint backdrop-blur-sm'
+                      }`}
+                    />
 
-                <button
-                  onClick={() => console.log('Goals clicked')}
-                  className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
-                    theme === 'dark'
-                      ? 'bg-card border-border hover:border-peach'
-                      : 'bg-white border-gray-200 hover:border-peach'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Target className="w-5 h-5 text-peach" />
-                    <span className="text-sm font-medium">Goals</span>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      {isValidatingTask ? (
+                        <LoadingSpinner size="sm" />
+                      ) : (
+                        <button
+                          onClick={handleStartFocus}
+                          disabled={!currentGoal.trim() || isValidatingTask}
+                          className={`p-2 rounded-lg transition-all ${
+                            currentGoal.trim() && !isValidatingTask
+                              ? 'bg-gradient-to-r from-mint to-sky hover:scale-105 text-white shadow-md'
+                              : theme === 'dark'
+                                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          <ArrowUp className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </button>
-              </div>
+
+                  {/* Placeholder Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+                    <button
+                      onClick={() => console.log('Recent clicked')}
+                      className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                        theme === 'dark'
+                          ? 'bg-card border-border hover:border-mint'
+                          : 'bg-white border-gray-200 hover:border-mint'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <History className="w-5 h-5 text-mint" />
+                        <span className="text-sm font-medium">Recent</span>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/lists')}
+                      className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                        theme === 'dark'
+                          ? 'bg-card border-border hover:border-lavender'
+                          : 'bg-white border-gray-200 hover:border-lavender'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <List className="w-5 h-5 text-lavender" />
+                        <span className="text-sm font-medium">Lists</span>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => console.log('Stats clicked')}
+                      className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                        theme === 'dark'
+                          ? 'bg-card border-border hover:border-sky'
+                          : 'bg-white border-gray-200 hover:border-sky'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-sky" />
+                        <span className="text-sm font-medium">Stats</span>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => console.log('Goals clicked')}
+                      className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                        theme === 'dark'
+                          ? 'bg-card border-border hover:border-peach'
+                          : 'bg-white border-gray-200 hover:border-peach'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <Target className="w-5 h-5 text-peach" />
+                        <span className="text-sm font-medium">Goals</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </main>

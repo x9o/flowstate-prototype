@@ -8,14 +8,23 @@ interface ListItem {
   icon?: string;
 }
 
+interface BlockedApp {
+  appName: string;
+  windowTitle: string;
+  blockedAt: number;
+  goal: string;
+}
+
 interface MonitoringContextType {
   monitoringState: MonitoringState;
   isPaused: boolean;
+  recentBlockedApps: BlockedApp[];
   startMonitoring: (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]) => Promise<void>;
   pauseMonitoring: () => Promise<void>;
   resumeMonitoring: () => Promise<void>;
   stopMonitoring: () => Promise<void>;
   getMonitoringStatus: () => Promise<MonitoringState>;
+  clearBlockedApps: () => void;
 }
 
 const MonitoringContext = createContext<MonitoringContextType | undefined>(undefined);
@@ -38,6 +47,7 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
   });
 
   const [isPaused, setIsPaused] = useState(false);
+  const [recentBlockedApps, setRecentBlockedApps] = useState<BlockedApp[]>([]);
 
   // Start monitoring session
   const startMonitoring = async (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]): Promise<void> => {
@@ -50,6 +60,9 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
         whitelistItems: whitelist?.map(item => ({ name: item.name, pattern: item.pattern })) || [],
         blocklistItems: blocklist?.map(item => ({ name: item.name, pattern: item.pattern })) || []
       });
+
+      // Clear recent blocked apps when starting a new session
+      setRecentBlockedApps([]);
 
       const result = await window.electronAPI.startMonitoring(goals, duration, whitelist, blocklist);
       if (!result.success) {
@@ -101,6 +114,11 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
     }
   };
 
+  // Clear recent blocked apps
+  const clearBlockedApps = (): void => {
+    setRecentBlockedApps([]);
+  };
+
   // Get current monitoring status
   const getMonitoringStatus = async (): Promise<MonitoringState> => {
     try {
@@ -147,6 +165,16 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
           blockedAttempts: prev.sessionStats.blockedAttempts + 1
         }
       }));
+
+      // Add to recent blocked apps
+      const blockedApp: BlockedApp = {
+        appName: data.windowInfo.owner?.name || data.windowInfo.app || 'Unknown',
+        windowTitle: data.windowInfo.title,
+        blockedAt: data.timestamp || Date.now(),
+        goal: data.goal || prev.currentGoals[0] || 'Unknown'
+      };
+
+      setRecentBlockedApps(prev => [blockedApp, ...prev.slice(0, 4)]); // Keep only 5 most recent
     };
 
     // Listen for monitoring errors
@@ -173,11 +201,13 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
   const value: MonitoringContextType = {
     monitoringState,
     isPaused,
+    recentBlockedApps,
     startMonitoring,
     pauseMonitoring,
     resumeMonitoring,
     stopMonitoring,
-    getMonitoringStatus
+    getMonitoringStatus,
+    clearBlockedApps
   };
 
   return (
