@@ -14,6 +14,9 @@ import { TaskValidationDialog } from "@/components/TaskValidationDialog";
 import { taskValidationService } from "@/services/TaskValidationService";
 import { quotes } from '@/data/quotes';
 
+// Dashboard Components
+import { ActiveSessionHeader, LargeTimerDisplay, SessionActionButton, GoalProgressTracker, RecentlyBlockedList, StayFocusedSection } from "@/components/dashboard";
+
 // Time-based greetings
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -70,7 +73,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [currentGoal, setCurrentGoal] = useState("");
-  const { startMonitoring, stopMonitoring, monitoringState } = useMonitoring();
+  const { startMonitoring, stopMonitoring, pauseMonitoring, resumeMonitoring, monitoringState, isPaused } = useMonitoring();
   const { whitelist, blocklist } = useLists();
   const [isMonitoring, setIsMonitoring] = useState(false);
 
@@ -305,6 +308,31 @@ const Index = () => {
     }
   };
 
+  const handlePauseResume = async () => {
+    try {
+      if (isPaused) {
+        await resumeMonitoring();
+      } else {
+        await pauseMonitoring();
+      }
+    } catch (error) {
+      console.error('Failed to toggle pause state:', error);
+    }
+  };
+
+  const handleTaskComplete = async () => {
+    // TODO: Implement task complete functionality
+    console.log('Task complete functionality to be implemented');
+  };
+
+  // Calculate current session time
+  const getCurrentSessionTime = () => {
+    if (monitoringState.sessionStats.sessionStartTime) {
+      return Date.now() - monitoringState.sessionStats.sessionStartTime;
+    }
+    return 0;
+  };
+
   const handleQuickStartTask = async (taskTitle: string) => {
     console.log('🔍 Quick start task validation for:', taskTitle);
 
@@ -427,7 +455,7 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Main Focus Section */}
+                      {/* Main Focus Section */}
             <div className={`rounded-2xl p-8 mb-8 ${
               theme === 'dark'
                 ? 'bg-card border border-border'
@@ -458,38 +486,195 @@ const Index = () => {
                 </div>
 
                 <div className="flex justify-center">
-                  {!isMonitoring ? (
-                    <div className="flex items-center gap-3">
-                      {isValidatingTask ? (
-                        <LoadingSpinner size="md" text="Validating task..." />
-                      ) : (
-                        <Button
-                          onClick={handleStartFocus}
-                          disabled={!currentGoal.trim() || isValidatingTask}
-                          size="lg"
-                          className="h-12 px-8 rounded-xl bg-gradient-to-r from-mint to-sky hover:scale-[1.02] transition-transform shadow-lg shadow-mint/20 text-base font-semibold"
-                        >
-                          Start Focusing
-                          <ArrowRight className="w-5 h-5 ml-2" />
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={handleStopMonitoring}
-                      size="lg"
-                      className="h-12 px-8 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 hover:scale-[1.02] transition-transform shadow-lg shadow-red-500/30 text-base font-semibold text-white"
-                    >
-                      Stop Monitoring
-                      <Square className="w-5 h-5 ml-2" />
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {isValidatingTask ? (
+                      <LoadingSpinner size="md" text="Validating task..." />
+                    ) : (
+                      <Button
+                        onClick={handleStartFocus}
+                        disabled={!currentGoal.trim() || isValidatingTask}
+                        size="lg"
+                        className="h-12 px-8 rounded-xl bg-gradient-to-r from-mint to-sky hover:scale-[1.02] transition-transform shadow-lg shadow-mint/20 text-base font-semibold"
+                      >
+                        Start Focusing
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* Dashboard Section - Always Visible */}
+            <div className="max-w-6xl mx-auto space-y-8">
+              {/* Three Stat Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={`rounded-xl p-6 text-center ${
+                  theme === 'dark'
+                    ? 'bg-card border border-border'
+                    : 'bg-white border border-gray-200 shadow-sm'
+                }`}>
+                  <div className="flex items-center justify-center gap-3">
+                    <Shield className="w-6 h-6 text-peach" />
+                    <div className="text-left">
+                      <div className="text-2xl font-bold">{stats.blocksToday}</div>
+                      <div className="text-sm text-muted-foreground">Blocks Stopped</div>
+                    </div>
+                  </div>
+                </div>
+                <div className={`rounded-xl p-6 text-center ${
+                  theme === 'dark'
+                    ? 'bg-card border border-border'
+                    : 'bg-white border border-gray-200 shadow-sm'
+                }`}>
+                  <div className="flex items-center justify-center gap-3">
+                    <Flame className="w-6 h-6 text-orange-500" />
+                    <div className="text-left">
+                      <div className="text-2xl font-bold">{stats.streak} days</div>
+                      <div className="text-sm text-muted-foreground">Streak</div>
+                    </div>
+                  </div>
+                </div>
+                <div className={`rounded-xl p-6 text-center ${
+                  theme === 'dark'
+                    ? 'bg-card border border-border'
+                    : 'bg-white border border-gray-200 shadow-sm'
+                }`}>
+                  <div className="flex items-center justify-center gap-3">
+                    <Clock className="w-6 h-6 text-sky" />
+                    <div className="text-left">
+                      <div className="text-2xl font-bold">{stats.totalTime}</div>
+                      <div className="text-sm text-muted-foreground">Goal: 2h (39%)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Always Visible */}
+              <div className="flex justify-center gap-4">
+                <Button
+                  onClick={isMonitoring ? handlePauseResume : () => {}}
+                  disabled={!isMonitoring}
+                  className={`h-12 px-8 rounded-xl font-semibold transition-all ${
+                    isPaused
+                      ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                      : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    {isPaused ? '▶️' : '⏸️'} {isPaused ? 'Resume' : 'Pause'}
+                  </span>
+                </Button>
+                <Button
+                  onClick={isMonitoring ? handleTaskComplete : () => {}}
+                  disabled={!isMonitoring}
+                  className="h-12 px-8 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold transition-all"
+                >
+                  <span className="flex items-center gap-2">
+                    ✅ Task Complete
+                  </span>
+                </Button>
+                <Button
+                  onClick={isMonitoring ? handleStopMonitoring : () => {}}
+                  disabled={!isMonitoring}
+                  className="h-12 px-8 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-all"
+                >
+                  <span className="flex items-center gap-2">
+                    🛑 End Session
+                  </span>
+                </Button>
+              </div>
+
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Recently Blocked Distractions */}
+                <div className={`rounded-2xl p-6 ${
+                  theme === 'dark'
+                    ? 'bg-card border border-border'
+                    : 'bg-white border border-gray-200 shadow-sm'
+                }`}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="w-5 h-5 text-peach" />
+                    <h3 className="text-lg font-semibold">🚫 Recently Blocked</h3>
+                  </div>
+
+                  {!isMonitoring && monitoringState.sessionStats.recentBlocks?.length === 0 ? (
+                    <div className={`text-center py-8 ${
+                      theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'
+                    }`}>
+                      <p className="text-sm">No distractions blocked yet. Start a session to see blocked distractions here.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(monitoringState.sessionStats.recentBlocks || []).slice(0, 5).map((block, index) => (
+                        <div
+                          key={`${block.timestamp}-${index}`}
+                          className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                            theme === 'dark'
+                              ? 'bg-muted/50 hover:bg-muted'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-medium truncate ${
+                              theme === 'dark' ? 'text-foreground' : 'text-gray-900'
+                            }`}>
+                              {block.title || 'Unknown distraction'}
+                            </p>
+                          </div>
+                          <span className={`text-xs ml-3 whitespace-nowrap ${
+                            theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'
+                          }`}>
+                            {Math.round((Date.now() - block.timestamp) / 60000)} min ago
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Stay Focused Section */}
+                <StayFocusedSection
+                  currentTask={isMonitoring ? (monitoringState.currentGoals[0] || 'Current Task') : 'Start a task to begin your focused session'}
+                  progress={isMonitoring ? Math.min((getCurrentSessionTime() / (2 * 60 * 60 * 1000)) * 100, 100) : 0}
+                  goalTime={2 * 60 * 60 * 1000}
+                />
+              </div>
+
+              {/* Active Session Timer - Only shows when monitoring */}
+              {isMonitoring && (
+                <div className={`rounded-2xl p-8 text-center ${
+                  theme === 'dark'
+                    ? 'bg-card border border-border'
+                    : 'bg-white border border-gray-200 shadow-sm'
+                }`}>
+                  <div className="space-y-4">
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+                      theme === 'dark'
+                        ? 'bg-green-900/30 border border-green-700/50'
+                        : 'bg-green-50 border border-green-200'
+                    }`}>
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className={`font-semibold ${
+                        theme === 'dark' ? 'text-green-400' : 'text-green-700'
+                      }`}>
+                        SESSION ACTIVE
+                      </span>
+                    </div>
+                    <div className={`text-5xl font-mono font-bold ${
+                      theme === 'dark' ? 'text-foreground' : 'text-gray-900'
+                    }`}>
+                      {formatTime(getCurrentSessionTime())}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Time Focused</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Recent Tasks and Tips Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {!isMonitoring && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Recent Tasks */}
               <div className="lg:col-span-2">
                 <div className={`rounded-2xl p-6 ${
@@ -551,6 +736,7 @@ const Index = () => {
                 </p>
               </div>
             </div>
+              )}
           </div>
         </main>
       </div>

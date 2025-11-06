@@ -59,18 +59,7 @@ export const ListsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedWhitelist) {
         const parsedWhitelist = JSON.parse(savedWhitelist);
         console.log('📋 Loaded whitelist from localStorage:', parsedWhitelist);
-        // TEMPORARY: Force reload defaults if whitelist is empty
-        if (parsedWhitelist.length === 0) {
-          console.log('⚠️ Whitelist is empty, loading defaults...');
-          const defaultWhitelist = DEFAULT_WHITELIST.map((item, index) => ({
-            ...item,
-            id: `wl-${index}`,
-          }));
-          setWhitelist(defaultWhitelist);
-          localStorage.setItem('flowstate-whitelist', JSON.stringify(defaultWhitelist));
-        } else {
-          setWhitelist(parsedWhitelist);
-        }
+        setWhitelist(parsedWhitelist);
       } else {
         // Set default whitelist
         const defaultWhitelist = DEFAULT_WHITELIST.map((item, index) => ({
@@ -85,18 +74,7 @@ export const ListsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedBlocklist) {
         const parsedBlocklist = JSON.parse(savedBlocklist);
         console.log('🚫 Loaded blocklist from localStorage:', parsedBlocklist);
-        // TEMPORARY: Force reload defaults if blocklist is empty
-        if (parsedBlocklist.length === 0) {
-          console.log('⚠️ Blocklist is empty, loading defaults...');
-          const defaultBlocklist = DEFAULT_BLOCKLIST.map((item, index) => ({
-            ...item,
-            id: `bl-${index}`,
-          }));
-          setBlocklist(defaultBlocklist);
-          localStorage.setItem('flowstate-blocklist', JSON.stringify(defaultBlocklist));
-        } else {
-          setBlocklist(parsedBlocklist);
-        }
+        setBlocklist(parsedBlocklist);
       } else {
         // Set default blocklist
         const defaultBlocklist = DEFAULT_BLOCKLIST.map((item, index) => ({

@@ -10,7 +10,10 @@ interface ListItem {
 
 interface MonitoringContextType {
   monitoringState: MonitoringState;
+  isPaused: boolean;
   startMonitoring: (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]) => Promise<void>;
+  pauseMonitoring: () => Promise<void>;
+  resumeMonitoring: () => Promise<void>;
   stopMonitoring: () => Promise<void>;
   getMonitoringStatus: () => Promise<MonitoringState>;
 }
@@ -34,6 +37,8 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
     sessionDuration: 0
   });
 
+  const [isPaused, setIsPaused] = useState(false);
+
   // Start monitoring session
   const startMonitoring = async (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]): Promise<void> => {
     try {
@@ -56,9 +61,36 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
     }
   };
 
+  // Pause monitoring session
+  const pauseMonitoring = async (): Promise<void> => {
+    try {
+      setIsPaused(true);
+      console.log('⏸️ Monitoring paused');
+      // Note: Actual pause functionality would be implemented in the monitoring service
+      // For now, we'll track the pause state in the UI
+    } catch (error) {
+      console.error('Error pausing monitoring:', error);
+      throw error;
+    }
+  };
+
+  // Resume monitoring session
+  const resumeMonitoring = async (): Promise<void> => {
+    try {
+      setIsPaused(false);
+      console.log('▶️ Monitoring resumed');
+      // Note: Actual resume functionality would be implemented in the monitoring service
+      // For now, we'll track the pause state in the UI
+    } catch (error) {
+      console.error('Error resuming monitoring:', error);
+      throw error;
+    }
+  };
+
   // Stop monitoring session
   const stopMonitoring = async (): Promise<void> => {
     try {
+      setIsPaused(false); // Reset pause state when stopping
       const result = await window.electronAPI.stopMonitoring();
       if (!result.success) {
         throw new Error(result.error || 'Failed to stop monitoring');
@@ -140,7 +172,10 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
 
   const value: MonitoringContextType = {
     monitoringState,
+    isPaused,
     startMonitoring,
+    pauseMonitoring,
+    resumeMonitoring,
     stopMonitoring,
     getMonitoringStatus
   };

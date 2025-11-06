@@ -6,11 +6,26 @@ export interface WindowInfo {
   memoryUsage?: number;
 }
 
+export interface AppCount {
+  app: string;
+  count: number;
+}
+
+export interface BlockEvent {
+  app: string;
+  title: string;
+  timestamp: number;
+}
+
 export interface SessionStats {
   totalChecks: number;
   blockedAttempts: number;
+  productiveChecks: number;
   sessionStartTime: number | null;
   currentWindow: WindowInfo | null;
+  topProductiveApps: AppCount[];
+  topBlockedApps: AppCount[];
+  recentBlocks: BlockEvent[];
 }
 
 export interface MonitoringState {

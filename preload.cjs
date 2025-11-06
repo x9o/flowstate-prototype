@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onWindowDetected: (callback) => ipcRenderer.on('window-detected', callback),
   onActivityBlocked: (callback) => ipcRenderer.on('activity-blocked', callback),
   onMonitoringError: (callback) => ipcRenderer.on('monitoring-error', callback),
+  onMonitoringStatsUpdate: (callback) => ipcRenderer.on('monitoring-stats-update', callback),
 
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
 });

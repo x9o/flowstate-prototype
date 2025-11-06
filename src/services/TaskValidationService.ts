@@ -1,38 +1,37 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini AI (same API key as monitoring service)
-const GEMINI_API_KEY = 'AIzaSyAwd6DjvP0t4J3Q9jXoY-7F8K0L1mN_nP4';
+const GEMINI_API_KEY = 'AIzaSyDt7br2YQDhiuXAJd-M2oWit7M_7sKTOgY';
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-const SYSTEM_PROMPT = `You are a strict task validation assistant. Your job is to determine if a task/goal is clear, specific, and represents legitimate work/study activity.
+const SYSTEM_PROMPT = `You are a balanced task validation assistant. Your job is to determine if a task/goal represents legitimate work, study, or productive activity.
 
-A task should be APPROVED (YES) only if it meets ALL criteria:
-- Contains specific, actionable details about what needs to be done
+A task should be APPROVED (YES) if it meets AT LEAST ONE criteria:
 - Represents a legitimate work, study, or productive activity
-- Has a clear deliverable or outcome that can be measured
-- Is specific enough to determine whether activities are relevant to it
+- Contains a clear domain/topic area (even if not super specific)
+- Has a clear type of work or activity
 - Contains meaningful content (not random text or gibberish)
-- Examples of GOOD tasks: "Finish physics homework chapter 5", "Complete Q3 sales presentation", "Write project proposal for client", "Study for chemistry midterm exam", "Debug authentication flow", "Design new landing page mockups", "Review pull requests", "Prepare meeting agenda"
+- Is reasonable for a work/study session
 
-A task should be REJECTED (NO) if it fails ANY criteria:
-- Too vague or ambiguous to determine relevant activities
+Examples of GOOD tasks: "work on ai saas", "study math", "code project", "write essay", "research topic", "design website", "analyze data", "prepare presentation", "debug code", "plan meeting", "review documents"
+
+A task should be REJECTED (NO) if it meets ANY criteria:
 - Gibberish, random characters, repeated letters, or nonsensical content
-- Too broad or generic without specific details
-- Does not represent legitimate productive activity
-- Contains only laughter, random sounds, or meaningless text
-- Examples of BAD tasks: "work", "study", "stuff", "things to do", "afadgag", "do something", "be productive", "hahaha", "lol", "asdfghjkl", "hello", "testing", "abc123", "random text"
+- Only laughter, random sounds, or meaningless text
+- Generic greetings or test text with no productive intent
+- Extremely vague with no indication of productive activity
+- Examples of BAD tasks: "afadgag", "hahaha", "lol", "asdfghjkl", "hello", "testing", "abc123", "blablablabla", "do nothing"
 
-CRITICAL: Be extremely strict about rejecting tasks that are:
-- Gibberish, random letters, or repeated characters
-- Laughter or casual conversation ("hahaha", "lol", "hehe")
-- Generic greetings or test text ("hello", "testing", "asdf")
-- Anything that doesn't represent actual productive work
+BE REASONABLE about approving tasks that:
+- Mention a work/study area (even if not super detailed)
+- Include a type of activity or project
+- Are reasonable for a productivity session
+- Show genuine intent to do productive work
 
-Respond with only:
-YES - if the task is clear, specific, and represents legitimate productive activity
-NO - if the task fails any validation criteria
+CRITICAL: Respond with ONLY ONE WORD:
+YES or NO
 
-No explanation needed, just YES or NO.`;
+No additional text, no explanations, no punctuation. Just YES or NO.`;
 
 interface TaskValidationCache {
   [task: string]: boolean; // true = approved, false = rejected
@@ -49,8 +48,9 @@ export class TaskValidationService {
     const stats = this.getCacheStats();
     console.log('📊 Cache stats on startup:', stats);
 
-    // Clear cache to force fresh validation with new system prompt
+    // Clear cache to force fresh validation with new, more lenient system prompt
     this.clearCache();
+    console.log('🆕 TaskValidationService initialized with more lenient validation criteria');
   }
 
   // Load cache from localStorage for session persistence
@@ -107,7 +107,7 @@ export class TaskValidationService {
   }
 
   // Validate task using AI
-  async validateTask(task: string): Promise<{ isValid: boolean; reason?: string }> {
+  async validateTask(task: string): Promise<{ isValid: boolean }> {
     const normalizedTask = task.toLowerCase().trim();
     console.log('🔍 TaskValidationService.validateTask() called with:', task);
 
@@ -116,8 +116,7 @@ export class TaskValidationService {
       const cachedResult = this.getCachedResult(normalizedTask);
       console.log('📋 Using cached result for task:', task, '=>', cachedResult);
       return {
-        isValid: cachedResult === true,
-        reason: cachedResult ? 'Task is valid (cached)' : 'Task is too vague (cached)'
+        isValid: cachedResult === true
       };
     }
 
@@ -132,27 +131,43 @@ export class TaskValidationService {
       const text = response.text().trim().toUpperCase();
 
       console.log('🤖 AI raw response for task validation:', `"${text}"`);
+      console.log('🤖 Response length:', text.length);
+      console.log('🤖 Full response object:', response);
 
       // Parse response
       const isValid = text === 'YES';
       console.log('🤖 Parsed AI response:', isValid ? 'VALID (YES)' : 'INVALID (NO)');
 
+      if (text !== 'YES' && text !== 'NO') {
+        console.warn('⚠️ Unexpected AI response format:', `"${text}"`);
+      }
+
       // Cache the result
       this.cacheResult(normalizedTask, isValid);
 
       return {
-        isValid,
-        reason: isValid ? 'Task is clear and specific enough' : 'Task is too vague or ambiguous'
+        isValid
       };
 
     } catch (error) {
       console.error('❌ Error calling AI API for task validation:', error);
       console.error('❌ Error details:', error.message || error);
+      console.error('❌ Stack trace:', error.stack);
+
+      // For debugging: If AI fails, reject tasks that are clearly invalid
+      const clearlyInvalid = /^[a-z]+$/i.test(task) && task.length < 8 && !/[aeiou]/i.test(task);
+      const isGibberish = /^(.)\1+$/i.test(task) || task.replace(/(.)\1+/gi, '$1').length < 5;
+
+      if (clearlyInvalid || isGibberish || task.toLowerCase().includes('blablab')) {
+        console.log('🚫 Task rejected by fallback validation:', task);
+        return {
+          isValid: false
+        };
+      }
 
       // If AI fails, be lenient and approve the task but log the error
       return {
-        isValid: true,
-        reason: 'Task validation service unavailable - proceeding anyway'
+        isValid: true
       };
     }
   }

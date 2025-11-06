@@ -18,8 +18,13 @@ let sessionStats = {
   unproductiveApps: new Map(),
   timeByApp: new Map(),
   blockedAttempts: 0,
+  productiveChecks: 0,
   sessionStartTime: null,
+  recentBlocks: [], // Array of {app, title, timestamp}
 };
+
+// Stats update interval
+let statsUpdateInterval = null;
 
 // AI System Prompt
 const SYSTEM_PROMPT = `
@@ -102,7 +107,45 @@ function updateStats(windowInfo, isProductive) {
 
   if (!isProductive) {
     sessionStats.blockedAttempts++;
+
+    // Add to recent blocks (keep last 10)
+    sessionStats.recentBlocks.unshift({
+      app: appName,
+      title: windowInfo.title,
+      timestamp: Date.now(),
+    });
+
+    if (sessionStats.recentBlocks.length > 10) {
+      sessionStats.recentBlocks = sessionStats.recentBlocks.slice(0, 10);
+    }
+  } else {
+    sessionStats.productiveChecks++;
   }
+}
+
+/**
+ * Serialize session stats for IPC (convert Maps to Arrays)
+ */
+function serializeStats() {
+  const topProductiveApps = Array.from(sessionStats.productiveApps.entries())
+    .map(([app, count]) => ({ app, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const topBlockedApps = Array.from(sessionStats.unproductiveApps.entries())
+    .map(([app, count]) => ({ app, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  return {
+    totalChecks: sessionStats.totalChecks,
+    blockedAttempts: sessionStats.blockedAttempts,
+    productiveChecks: sessionStats.productiveChecks,
+    sessionStartTime: sessionStats.sessionStartTime,
+    topProductiveApps,
+    topBlockedApps,
+    recentBlocks: sessionStats.recentBlocks,
+  };
 }
 
 /**
@@ -340,6 +383,13 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
   console.log(`LIST: Whitelist: ${whitelist.length} items`);
   console.log(`LIST: Blocklist: ${blocklist.length} items`);
 
+  // Start periodic stats updates to renderer (every 5 seconds)
+  if (sendToRenderer) {
+    statsUpdateInterval = setInterval(() => {
+      sendToRenderer('monitoring-stats-update', serializeStats());
+    }, 5000);
+  }
+
   let previousWindow = null;
   const pollInterval = 1000; // Check every second
   let isRunning = true;
@@ -443,13 +493,24 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
   return {
     stop: () => {
       isRunning = false;
+
+      // Clear stats update interval
+      if (statsUpdateInterval) {
+        clearInterval(statsUpdateInterval);
+        statsUpdateInterval = null;
+      }
+
       console.log('STOP: Monitoring stopped');
+
+      // Return final stats for analytics persistence
+      return serializeStats();
     },
-    getStats: () => sessionStats,
+    getStats: () => serializeStats(),
   };
 }
 
 module.exports = {
   startMonitoring,
   sessionStats,
+  serializeStats,
 };
