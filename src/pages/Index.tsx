@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Play, Target, Lightbulb, ArrowRight, Square, Flame, Clock, Shield, FileText, TrendingUp, CheckCircle } from "lucide-react";
+import { Plus, Search, Play, Target, Lightbulb, ArrowRight, Square, Flame, Clock, Shield, FileText, TrendingUp, CheckCircle, Menu, ArrowUp, Shuffle, History, BarChart3, Settings as SettingsIcon, Sparkles, List, Sun, Moon } from "lucide-react";
 import { useTheme } from '@/contexts/ThemeContext';
 import { useMonitoring } from '@/contexts/MonitoringContext';
 import { useLists } from '@/contexts/ListsContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,22 +18,48 @@ import { quotes } from '@/data/quotes';
 // Dashboard Components
 import { ActiveSessionHeader, LargeTimerDisplay, SessionActionButton, GoalProgressTracker, RecentlyBlockedList, StayFocusedSection } from "@/components/dashboard";
 
-// Time-based greetings
-const getGreeting = () => {
+// Time-based greetings and icons
+const getGreetingData = () => {
   const hour = new Date().getHours();
 
   let greeting;
+  let icon: 'sun' | 'moon';
+
   if (hour >= 5 && hour < 12) {
     greeting = "Good morning";
+    icon = 'sun';
   } else if (hour >= 12 && hour < 17) {
     greeting = "Good afternoon";
+    icon = 'sun';
   } else if (hour >= 17 && hour < 21) {
     greeting = "Good evening";
+    icon = 'sun';
   } else {
     greeting = "Good night";
+    icon = 'moon';
   }
 
-  return `${greeting}, Sunny!`;
+  return { text: `${greeting}, Sunny!`, icon };
+};
+
+// Random prompts for what the user is working on
+const workPrompts = [
+  "What are you working on?",
+  "What would you like to do today?",
+  "What's your focus for today?",
+  "What task are you tackling?",
+  "What are you building today?",
+  "What's on your mind?",
+  "What do you want to accomplish?",
+  "Ready to get focused?",
+  "What's your goal today?",
+  "What are you creating?",
+  "What challenge are you solving?",
+  "What's your mission today?"
+];
+
+const getRandomPrompt = () => {
+  return workPrompts[Math.floor(Math.random() * workPrompts.length)];
 };
 
 
@@ -71,6 +98,7 @@ const Index = () => {
   console.log('🏠 Index component loaded - task validation should be working');
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { toggleSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
   const [currentGoal, setCurrentGoal] = useState("");
   const { startMonitoring, stopMonitoring, pauseMonitoring, resumeMonitoring, monitoringState, isPaused } = useMonitoring();
@@ -93,6 +121,8 @@ const Index = () => {
 
   // State for dynamic content
   const [greeting, setGreeting] = useState("");
+  const [greetingIcon, setGreetingIcon] = useState<'sun' | 'moon'>('sun');
+  const [prompt, setPrompt] = useState("");
   const [currentQuote, setCurrentQuote] = useState(quotes[Math.floor(Math.random() * quotes.length)]);
   const [currentTip, setCurrentTip] = useState(tips[0]);
   const [quoteIndex, setQuoteIndex] = useState(Math.floor(Math.random() * quotes.length));
@@ -116,12 +146,12 @@ const Index = () => {
     setIsMonitoring(monitoringState?.isActive || false);
   }, [monitoringState]);
 
-  // Update greeting every minute
+  // Set greeting and random prompt on mount
   useEffect(() => {
-    const updateGreeting = () => setGreeting(getGreeting());
-    updateGreeting(); // Initial call
-    const interval = setInterval(updateGreeting, 60000); // Update every minute
-    return () => clearInterval(interval);
+    const greetingData = getGreetingData();
+    setGreeting(greetingData.text);
+    setGreetingIcon(greetingData.icon);
+    setPrompt(getRandomPrompt());
   }, []);
 
   // Rotate quotes every 15 seconds with transition
@@ -388,355 +418,183 @@ const Index = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden relative">
       {/* Sidebar */}
       <Sidebar onStartSession={handleStartSession} />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Top Bar */}
-        <header className={`h-16 border-b flex items-center justify-between px-6 ${
-          theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'
-        }`}>
-          <div className="flex items-center gap-3">
-            <img
-              src={theme === 'dark' ? "./flowstate_transparent_dark_resized.png" : "./flowstate_transparent_light_resized.png"}
-              alt="FlowState"
-              className="w-8 h-8 transition-all duration-300"
-            />
-            <h1 className="text-lg font-semibold">FlowState</h1>
-          </div>
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-6 z-10">
+          {/* Menu Button - Top Left */}
+          <button
+            onClick={toggleSidebar}
+            className={`p-2 rounded-lg transition-colors ${
+              theme === 'dark'
+                ? 'hover:bg-accent text-foreground'
+                : 'hover:bg-gray-100 text-gray-900'
+            }`}
+          >
+            <Menu className="w-6 h-6" />
+          </button>
 
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-secondary rounded-xl transition-colors">
-              <Search className="w-5 h-5 text-muted-foreground" />
-            </button>
-            <UserDropdown
-              onAccountClick={handleAccountClick}
-              onSettingsClick={handleSettingsClick}
-            />
-          </div>
-        </header>
+          {/* Account Icon - Top Right */}
+          <UserDropdown
+            onAccountClick={handleAccountClick}
+            onSettingsClick={handleSettingsClick}
+          />
+        </div>
 
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto p-8">
-            {/* Greeting and Quote Section */}
-            <div className="text-center space-y-4 mb-8">
-              <h1 className="text-3xl font-bold transition-all duration-500 ease-in-out">
-                {greeting}
-              </h1>
-              <div className="transition-all duration-500 ease-in-out opacity-90">
-                <p className="text-lg italic text-muted-foreground">
-                  "{currentQuote.text}" — {currentQuote.author}
+        {/* Main Content - Clean and Centered */}
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="w-full max-w-3xl">
+            <div className="text-center space-y-8">
+              {/* Main Header - Greeting */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-3">
+                  {greetingIcon === 'sun' ? (
+                    <Sun className="w-12 h-12 text-amber-500" />
+                  ) : (
+                    <Moon className="w-12 h-12 text-indigo-400" />
+                  )}
+                  <h1 className="text-5xl font-bold transition-all duration-500 ease-in-out">
+                    {greeting}
+                  </h1>
+                </div>
+                {/* Subheader - Prompt */}
+                <p className="text-xl text-muted-foreground">
+                  {prompt}
                 </p>
               </div>
-            </div>
 
-            {/* Stats Bar */}
-            <div className={`rounded-2xl p-6 mb-8 ${
-              theme === 'dark'
-                ? 'bg-card border border-border'
-                : 'bg-white border border-gray-200 shadow-sm'
-            }`}>
-              <div className="flex items-center justify-center gap-10 text-base">
-                <div className="flex items-center gap-3">
-                  <Flame className="w-6 h-6 text-orange-500" />
-                  <span className="font-semibold text-lg">{stats.streak} day streak</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Clock className="w-6 h-6 text-blue-500" />
-                  <span className="font-semibold text-lg">{stats.totalTime}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Shield className="w-6 h-6 text-green-500" />
-                  <span className="font-semibold text-lg">{stats.blocksToday} blocks today</span>
-                </div>
-              </div>
-            </div>
-
-                      {/* Main Focus Section */}
-            <div className={`rounded-2xl p-8 mb-8 ${
-              theme === 'dark'
-                ? 'bg-card border border-border'
-                : 'bg-white border border-gray-200 shadow-sm'
-            }`}>
-              <div className="text-center space-y-6">
-                <div className="flex items-center justify-center gap-2">
-                  <Target className="w-6 h-6 text-mint" />
-                  <h2 className="text-2xl font-semibold">What are you working on?</h2>
-                </div>
-
-                <div className="relative max-w-2xl mx-auto">
-                  <Input
-                    value={currentGoal}
-                    onChange={(e) => setCurrentGoal(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleStartFocus();
-                      }
-                    }}
-                    placeholder={placeholderText || "What are you working on?"}
-                    className={`w-full h-14 px-6 text-lg rounded-xl border-2 transition-all ${
+              {/* Input with icons inside */}
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <button
+                    className={`p-2 rounded-lg transition-colors ${
                       theme === 'dark'
-                        ? 'bg-muted border-border focus:border-mint'
-                        : 'bg-gray-50 border-gray-300 focus:border-mint'
+                        ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
                     }`}
-                  />
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                  <button
+                    className={`p-2 rounded-lg transition-colors ${
+                      theme === 'dark'
+                        ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    <Shuffle className="w-5 h-5" />
+                  </button>
+                  <button
+                    className={`p-2 rounded-lg transition-colors ${
+                      theme === 'dark'
+                        ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    <History className="w-5 h-5" />
+                  </button>
                 </div>
 
-                <div className="flex justify-center">
-                  <div className="flex items-center gap-3">
-                    {isValidatingTask ? (
-                      <LoadingSpinner size="md" text="Validating task..." />
-                    ) : (
-                      <Button
-                        onClick={handleStartFocus}
-                        disabled={!currentGoal.trim() || isValidatingTask}
-                        size="lg"
-                        className="h-12 px-8 rounded-xl bg-gradient-to-r from-mint to-sky hover:scale-[1.02] transition-transform shadow-lg shadow-mint/20 text-base font-semibold"
-                      >
-                        Start Focusing
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Dashboard Section - Always Visible */}
-            <div className="max-w-6xl mx-auto space-y-8">
-              {/* Three Stat Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className={`rounded-xl p-6 text-center ${
-                  theme === 'dark'
-                    ? 'bg-card border border-border'
-                    : 'bg-white border border-gray-200 shadow-sm'
-                }`}>
-                  <div className="flex items-center justify-center gap-3">
-                    <Shield className="w-6 h-6 text-peach" />
-                    <div className="text-left">
-                      <div className="text-2xl font-bold">{stats.blocksToday}</div>
-                      <div className="text-sm text-muted-foreground">Blocks Stopped</div>
-                    </div>
-                  </div>
-                </div>
-                <div className={`rounded-xl p-6 text-center ${
-                  theme === 'dark'
-                    ? 'bg-card border border-border'
-                    : 'bg-white border border-gray-200 shadow-sm'
-                }`}>
-                  <div className="flex items-center justify-center gap-3">
-                    <Flame className="w-6 h-6 text-orange-500" />
-                    <div className="text-left">
-                      <div className="text-2xl font-bold">{stats.streak} days</div>
-                      <div className="text-sm text-muted-foreground">Streak</div>
-                    </div>
-                  </div>
-                </div>
-                <div className={`rounded-xl p-6 text-center ${
-                  theme === 'dark'
-                    ? 'bg-card border border-border'
-                    : 'bg-white border border-gray-200 shadow-sm'
-                }`}>
-                  <div className="flex items-center justify-center gap-3">
-                    <Clock className="w-6 h-6 text-sky" />
-                    <div className="text-left">
-                      <div className="text-2xl font-bold">{stats.totalTime}</div>
-                      <div className="text-sm text-muted-foreground">Goal: 2h (39%)</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons - Always Visible */}
-              <div className="flex justify-center gap-4">
-                <Button
-                  onClick={isMonitoring ? handlePauseResume : () => {}}
-                  disabled={!isMonitoring}
-                  className={`h-12 px-8 rounded-xl font-semibold transition-all ${
-                    isPaused
-                      ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                      : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                <Input
+                  value={currentGoal}
+                  onChange={(e) => setCurrentGoal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleStartFocus();
+                    }
+                  }}
+                  placeholder={placeholderText || "What are you working on?"}
+                  className={`w-full h-16 pl-40 pr-20 text-lg rounded-2xl border-2 transition-all ${
+                    theme === 'dark'
+                      ? 'bg-muted/50 border-border focus:border-mint backdrop-blur-sm'
+                      : 'bg-white/80 border-gray-300 focus:border-mint backdrop-blur-sm'
                   }`}
-                >
-                  <span className="flex items-center gap-2">
-                    {isPaused ? '▶️' : '⏸️'} {isPaused ? 'Resume' : 'Pause'}
-                  </span>
-                </Button>
-                <Button
-                  onClick={isMonitoring ? handleTaskComplete : () => {}}
-                  disabled={!isMonitoring}
-                  className="h-12 px-8 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold transition-all"
-                >
-                  <span className="flex items-center gap-2">
-                    ✅ Task Complete
-                  </span>
-                </Button>
-                <Button
-                  onClick={isMonitoring ? handleStopMonitoring : () => {}}
-                  disabled={!isMonitoring}
-                  className="h-12 px-8 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-all"
-                >
-                  <span className="flex items-center gap-2">
-                    🛑 End Session
-                  </span>
-                </Button>
-              </div>
+                />
 
-              {/* Two Column Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recently Blocked Distractions */}
-                <div className={`rounded-2xl p-6 ${
-                  theme === 'dark'
-                    ? 'bg-card border border-border'
-                    : 'bg-white border border-gray-200 shadow-sm'
-                }`}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Shield className="w-5 h-5 text-peach" />
-                    <h3 className="text-lg font-semibold">🚫 Recently Blocked</h3>
-                  </div>
-
-                  {!isMonitoring && monitoringState.sessionStats.recentBlocks?.length === 0 ? (
-                    <div className={`text-center py-8 ${
-                      theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'
-                    }`}>
-                      <p className="text-sm">No distractions blocked yet. Start a session to see blocked distractions here.</p>
-                    </div>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  {isValidatingTask ? (
+                    <LoadingSpinner size="sm" />
                   ) : (
-                    <div className="space-y-3">
-                      {(monitoringState.sessionStats.recentBlocks || []).slice(0, 5).map((block, index) => (
-                        <div
-                          key={`${block.timestamp}-${index}`}
-                          className={`flex items-center justify-between p-3 rounded-lg transition-all ${
-                            theme === 'dark'
-                              ? 'bg-muted/50 hover:bg-muted'
-                              : 'bg-gray-50 hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className={`font-medium truncate ${
-                              theme === 'dark' ? 'text-foreground' : 'text-gray-900'
-                            }`}>
-                              {block.title || 'Unknown distraction'}
-                            </p>
-                          </div>
-                          <span className={`text-xs ml-3 whitespace-nowrap ${
-                            theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'
-                          }`}>
-                            {Math.round((Date.now() - block.timestamp) / 60000)} min ago
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <button
+                      onClick={handleStartFocus}
+                      disabled={!currentGoal.trim() || isValidatingTask}
+                      className={`p-2 rounded-lg transition-all ${
+                        currentGoal.trim() && !isValidatingTask
+                          ? 'bg-gradient-to-r from-mint to-sky hover:scale-105 text-white shadow-md'
+                          : theme === 'dark'
+                            ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      <ArrowUp className="w-5 h-5" />
+                    </button>
                   )}
                 </div>
-
-                {/* Stay Focused Section */}
-                <StayFocusedSection
-                  currentTask={isMonitoring ? (monitoringState.currentGoals[0] || 'Current Task') : 'Start a task to begin your focused session'}
-                  progress={isMonitoring ? Math.min((getCurrentSessionTime() / (2 * 60 * 60 * 1000)) * 100, 100) : 0}
-                  goalTime={2 * 60 * 60 * 1000}
-                />
               </div>
 
-              {/* Active Session Timer - Only shows when monitoring */}
-              {isMonitoring && (
-                <div className={`rounded-2xl p-8 text-center ${
-                  theme === 'dark'
-                    ? 'bg-card border border-border'
-                    : 'bg-white border border-gray-200 shadow-sm'
-                }`}>
-                  <div className="space-y-4">
-                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-                      theme === 'dark'
-                        ? 'bg-green-900/30 border border-green-700/50'
-                        : 'bg-green-50 border border-green-200'
-                    }`}>
-                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className={`font-semibold ${
-                        theme === 'dark' ? 'text-green-400' : 'text-green-700'
-                      }`}>
-                        SESSION ACTIVE
-                      </span>
-                    </div>
-                    <div className={`text-5xl font-mono font-bold ${
-                      theme === 'dark' ? 'text-foreground' : 'text-gray-900'
-                    }`}>
-                      {formatTime(getCurrentSessionTime())}
-                    </div>
-                    <p className="text-sm text-muted-foreground">Time Focused</p>
+              {/* Placeholder Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+                <button
+                  onClick={() => console.log('Recent clicked')}
+                  className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                    theme === 'dark'
+                      ? 'bg-card border-border hover:border-mint'
+                      : 'bg-white border-gray-200 hover:border-mint'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <History className="w-5 h-5 text-mint" />
+                    <span className="text-sm font-medium">Recent</span>
                   </div>
-                </div>
-              )}
-            </div>
+                </button>
 
-            {/* Recent Tasks and Tips Section */}
-            {!isMonitoring && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Recent Tasks */}
-              <div className="lg:col-span-2">
-                <div className={`rounded-2xl p-6 ${
-                  theme === 'dark'
-                    ? 'bg-card border border-border'
-                    : 'bg-white border border-gray-200 shadow-sm'
-                }`}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">Recent Tasks</h3>
+                <button
+                  onClick={() => navigate('/lists')}
+                  className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                    theme === 'dark'
+                      ? 'bg-card border-border hover:border-lavender'
+                      : 'bg-white border-gray-200 hover:border-lavender'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <List className="w-5 h-5 text-lavender" />
+                    <span className="text-sm font-medium">Lists</span>
                   </div>
-                  <div className="space-y-3">
-                    {tasks.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground">
-                          No recent tasks. Start by adding your first task above.
-                        </p>
-                      </div>
-                    ) : (
-                      tasks.slice(0, 5).map((task) => (
-                        <div
-                          key={task.id}
-                          className={`flex items-center justify-between p-3 rounded-lg transition-all hover:shadow-sm ${
-                            theme === 'dark'
-                              ? 'bg-muted/50 hover:bg-muted'
-                              : 'bg-gray-50 hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className="flex-1">
-                            <p className="font-medium">{task.title}</p>
-                          </div>
-                          <Button
-                            onClick={() => handleQuickStartTask(task.title)}
-                            size="sm"
-                            variant="ghost"
-                            className="rounded-lg h-8 w-8 p-0"
-                          >
-                            <Play className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
+                </button>
 
-              {/* Quick Tip */}
-              <div className={`rounded-2xl p-6 ${
-                theme === 'dark'
-                  ? 'bg-card border border-border'
-                  : 'bg-gradient-to-br from-mint/10 to-sky/10 border border-mint/20'
-              }`}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Lightbulb className="w-5 h-5 text-mint" />
-                  <h3 className="text-lg font-semibold">Productivity Tip</h3>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed transition-all duration-500 ease-in-out">
-                  {currentTip}
-                </p>
+                <button
+                  onClick={() => console.log('Stats clicked')}
+                  className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                    theme === 'dark'
+                      ? 'bg-card border-border hover:border-sky'
+                      : 'bg-white border-gray-200 hover:border-sky'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-sky" />
+                    <span className="text-sm font-medium">Stats</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => console.log('Goals clicked')}
+                  className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                    theme === 'dark'
+                      ? 'bg-card border-border hover:border-peach'
+                      : 'bg-white border-gray-200 hover:border-peach'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Target className="w-5 h-5 text-peach" />
+                    <span className="text-sm font-medium">Goals</span>
+                  </div>
+                </button>
               </div>
             </div>
-              )}
           </div>
         </main>
       </div>

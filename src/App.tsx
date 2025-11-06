@@ -10,6 +10,7 @@ import AppLayout from "./components/AppLayout";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { MonitoringProvider } from "@/contexts/MonitoringContext";
 import { ListsProvider } from "@/contexts/ListsContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import Lists from "./pages/Lists";
 import PageTransition from "./components/PageTransition";
 
@@ -20,21 +21,23 @@ const App = () => (
     <ThemeProvider>
       <MonitoringProvider>
         <ListsProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <HashRouter>
-              <AppLayout>
-                <Routes>
-                  <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-                  <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
-                  <Route path="/lists" element={<PageTransition><Lists /></PageTransition>} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-                </Routes>
-              </AppLayout>
-            </HashRouter>
-          </TooltipProvider>
+          <SidebarProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <HashRouter>
+                <AppLayout>
+                  <Routes>
+                    <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+                    <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+                    <Route path="/lists" element={<PageTransition><Lists /></PageTransition>} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+                  </Routes>
+                </AppLayout>
+              </HashRouter>
+            </TooltipProvider>
+          </SidebarProvider>
         </ListsProvider>
       </MonitoringProvider>
     </ThemeProvider>
