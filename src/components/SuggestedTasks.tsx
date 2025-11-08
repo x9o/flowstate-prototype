@@ -63,8 +63,8 @@ export const SuggestedTasks: React.FC<SuggestedTasksProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-muted-foreground" />
-                <h3 className="text-lg font-semibold">💡 Suggested Tasks</h3>
+                <Lightbulb className="w-5 h-5 text-mint" />
+                <h3 className="text-lg font-semibold">Suggested Tasks</h3>
               </div>
             </div>
             <div className="flex items-center justify-center py-8">
@@ -88,8 +88,8 @@ export const SuggestedTasks: React.FC<SuggestedTasksProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-muted-foreground" />
-                <h3 className="text-lg font-semibold">💡 Suggested Tasks</h3>
+                <Lightbulb className="w-5 h-5 text-mint" />
+                <h3 className="text-lg font-semibold">Suggested Tasks</h3>
               </div>
               <Button
                 variant="ghost"
@@ -123,7 +123,7 @@ export const SuggestedTasks: React.FC<SuggestedTasksProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-mint" />
-              <h3 className="text-lg font-semibold">💡 Suggested Tasks</h3>
+              <h3 className="text-lg font-semibold">Suggested Tasks</h3>
               {suggestionsFromCache && (
                 <span className="text-xs text-muted-foreground ml-2">(cached)</span>
               )}

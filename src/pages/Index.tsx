@@ -612,7 +612,7 @@ const Index = () => {
                     <div className={`p-4 rounded-xl ${
                       theme === 'dark' ? 'bg-card' : 'bg-gray-50'
                     }`}>
-                      <div className="text-2xl font-bold text-sky">{monitoringState.sessionStats.blockedAttempts}</div>
+                      <div className="text-2xl font-bold text-mint">{monitoringState.sessionStats.blockedAttempts}</div>
                       <div className="text-sm text-muted-foreground">Blocked</div>
                     </div>
                     <div className={`p-4 rounded-xl ${
@@ -624,7 +624,7 @@ const Index = () => {
                     <div className={`p-4 rounded-xl ${
                       theme === 'dark' ? 'bg-card' : 'bg-gray-50'
                     }`}>
-                      <div className="text-2xl font-bold text-peach">{formatTime(sessionTime)}</div>
+                      <div className="text-2xl font-bold text-mint">{formatTime(sessionTime)}</div>
                       <div className="text-sm text-muted-foreground">Duration</div>
                     </div>
                   </div>
@@ -666,7 +666,7 @@ const Index = () => {
                       {greetingIcon === 'sun' ? (
                         <Sun className="w-12 h-12 text-amber-500" />
                       ) : (
-                        <Moon className="w-12 h-12 text-indigo-400" />
+                        <Moon className="w-12 h-12 text-mint" />
                       )}
                       <h1 className="text-5xl font-bold transition-all duration-500 ease-in-out bg-gradient-to-r from-foreground to-mint bg-clip-text text-transparent">
                         {greeting}
@@ -772,12 +772,12 @@ const Index = () => {
                       onClick={() => navigate('/lists')}
                       className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
                         theme === 'dark'
-                          ? 'bg-card border-border hover:border-lavender'
-                          : 'bg-white border-gray-200 hover:border-lavender'
+                          ? 'bg-card border-border hover:border-mint'
+                          : 'bg-white border-gray-200 hover:border-mint'
                       }`}
                     >
                       <div className="flex items-center justify-center gap-2">
-                        <List className="w-5 h-5 text-lavender" />
+                        <List className="w-5 h-5 text-mint" />
                         <span className="text-sm font-medium">Lists</span>
                       </div>
                     </button>
@@ -786,12 +786,12 @@ const Index = () => {
                       onClick={() => console.log('Stats clicked')}
                       className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
                         theme === 'dark'
-                          ? 'bg-card border-border hover:border-sky'
-                          : 'bg-white border-gray-200 hover:border-sky'
+                          ? 'bg-card border-border hover:border-mint'
+                          : 'bg-white border-gray-200 hover:border-mint'
                       }`}
                     >
                       <div className="flex items-center justify-center gap-2">
-                        <BarChart3 className="w-5 h-5 text-sky" />
+                        <BarChart3 className="w-5 h-5 text-mint" />
                         <span className="text-sm font-medium">Stats</span>
                       </div>
                     </button>
@@ -800,12 +800,12 @@ const Index = () => {
                       onClick={() => console.log('Goals clicked')}
                       className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
                         theme === 'dark'
-                          ? 'bg-card border-border hover:border-peach'
-                          : 'bg-white border-gray-200 hover:border-peach'
+                          ? 'bg-card border-border hover:border-mint'
+                          : 'bg-white border-gray-200 hover:border-mint'
                       }`}
                     >
                       <div className="flex items-center justify-center gap-2">
-                        <Target className="w-5 h-5 text-peach" />
+                        <Target className="w-5 h-5 text-mint" />
                         <span className="text-sm font-medium">Goals</span>
                       </div>
                     </button>

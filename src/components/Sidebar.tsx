@@ -83,7 +83,7 @@ export const Sidebar = ({ onStartSession }: SidebarProps) => {
                   : 'hover:bg-gray-100 text-gray-700'
             }`}
           >
-            <Clock className="w-5 h-5 text-indigo" />
+            <Clock className="w-5 h-5 text-mint" />
             <span className="text-sm font-medium">Recent Tasks</span>
           </button>
 
@@ -99,7 +99,7 @@ export const Sidebar = ({ onStartSession }: SidebarProps) => {
                   : 'hover:bg-gray-100 text-gray-700'
             }`}
           >
-            <BarChart3 className="w-5 h-5 text-sky" />
+            <BarChart3 className="w-5 h-5 text-mint" />
             <span className="text-sm font-medium">Stats</span>
           </button>
 
@@ -115,7 +115,7 @@ export const Sidebar = ({ onStartSession }: SidebarProps) => {
                   : 'hover:bg-gray-100 text-gray-700'
             }`}
           >
-            <Settings className="w-5 h-5 text-peach" />
+            <Settings className="w-5 h-5 text-mint" />
             <span className="text-sm font-medium">Settings</span>
           </button>
         </nav>
@@ -142,7 +142,7 @@ export const Sidebar = ({ onStartSession }: SidebarProps) => {
                   : 'hover:bg-gray-100 text-gray-700'
             }`}
           >
-            <List className="w-5 h-5 text-lavender" />
+            <List className="w-5 h-5 text-mint" />
             <span className="text-sm font-medium">Lists</span>
           </button>
         </nav>

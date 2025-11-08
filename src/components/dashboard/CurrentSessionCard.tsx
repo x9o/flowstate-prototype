@@ -45,7 +45,7 @@ export const CurrentSessionCard: React.FC<CurrentSessionCardProps> = ({
         </div>
         <button
           onClick={onStop}
-          className="px-4 py-2 bg-peach/20 hover:bg-peach/30 text-peach border border-peach/30 rounded-lg text-sm font-medium transition-all duration-200"
+          className="px-4 py-2 bg-mint/20 hover:bg-mint/30 text-mint border border-mint/30 rounded-lg text-sm font-medium transition-all duration-200"
         >
           Stop
         </button>
@@ -63,8 +63,8 @@ export const CurrentSessionCard: React.FC<CurrentSessionCardProps> = ({
         </div>
 
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-sky/20 flex items-center justify-center">
-            <Activity className="w-5 h-5 text-sky" />
+          <div className="w-10 h-10 rounded-lg bg-mint/20 flex items-center justify-center">
+            <Activity className="w-5 h-5 text-mint" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Checks</p>
@@ -73,8 +73,8 @@ export const CurrentSessionCard: React.FC<CurrentSessionCardProps> = ({
         </div>
 
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-peach/20 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-peach" />
+          <div className="w-10 h-10 rounded-lg bg-mint/20 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-mint" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Blocks</p>
