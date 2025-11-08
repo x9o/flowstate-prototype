@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run electron:dev:*)"
+      "Bash(npm run electron:dev:*)",
+      "Bash(taskkill:*)",
+      "Bash(nul:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(cmd /c \"taskkill /F /PID 5208\")",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

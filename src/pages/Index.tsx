@@ -19,6 +19,7 @@ import { StrictnessSelector, StrictnessTrigger } from "@/components/StrictnessSe
 import { RecentTasksModal } from "@/components/RecentTasksModal";
 import { SessionStatsModal } from "@/components/SessionStatsModal";
 import { TextShimmer } from "@/components/ui/text-shimmer";
+import { SuggestedTasks } from "@/components/SuggestedTasks";
 
 // Dashboard Components
 import { ActiveSessionHeader, LargeTimerDisplay, SessionActionButton, GoalProgressTracker, RecentlyBlockedList, StayFocusedSection } from "@/components/dashboard";
@@ -514,6 +515,17 @@ const Index = () => {
     }
   };
 
+  const handleSuggestedTaskSelect = async (task: string) => {
+    console.log('💡 Suggested task selected:', task);
+
+    // Set the current goal to the selected suggested task
+    setCurrentGoal(task);
+
+    // Focus the input field to allow user to review/modify before starting
+    const mainInput = document.querySelector('input[placeholder*="working on"]') as HTMLInputElement;
+    mainInput?.focus();
+  };
+
   const handleAccountClick = () => {
     console.log("Account clicked");
     // TODO: Implement account functionality
@@ -797,6 +809,11 @@ const Index = () => {
                         <span className="text-sm font-medium">Goals</span>
                       </div>
                     </button>
+                  </div>
+
+                  {/* Suggested Tasks */}
+                  <div className="mt-6">
+                    <SuggestedTasks onTaskSelect={handleSuggestedTaskSelect} />
                   </div>
                 </div>
               )}
