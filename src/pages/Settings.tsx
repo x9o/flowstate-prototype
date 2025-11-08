@@ -49,37 +49,31 @@ const Settings = ({ onBack }: { onBack: () => void }) => {
   const blacklistedRules = filterRules.filter(rule => rule.type === 'blacklist');
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-border">
-        <div className="w-full max-w-[1440px] mx-auto px-2 sm:px-4 lg:px-6 h-12 sm:h-14 lg:h-16 flex items-center justify-between">
-          {/* Left: Back Button and Title */}
-          <div className="flex items-center gap-2 sm:gap-3">
+    <div className="flex h-screen overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar */}
+        <header className={`h-16 border-b flex items-center justify-between px-6 ${
+          theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'
+        }`}>
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-colors ${
+              className={`p-2 rounded-lg transition-colors ${
                 theme === 'dark'
                   ? 'text-purple-200 hover:text-white hover:bg-purple-900'
                   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
               }`}
             >
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-2">
-              <img
-                src={theme === 'dark' ? "./flowstate_transparent_dark_resized.png" : "./flowstate_transparent_light_resized.png"}
-                alt="FlowState"
-                className="w-6 h-6 sm:w-8 sm:h-8 transition-all duration-300"
-              />
-              <h1 className="text-base sm:text-lg font-semibold">Settings</h1>
-            </div>
+            <h1 className="text-lg font-semibold">Settings</h1>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="w-full max-w-[1440px] mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6">
-        <div className="max-w-4xl mx-auto">
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto p-8">
+          <div className="max-w-4xl mx-auto">
           {/* Page Description */}
           <div className="mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold mb-2">App Filtering</h2>
@@ -262,7 +256,8 @@ const Settings = ({ onBack }: { onBack: () => void }) => {
             </div>
           </div>
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

@@ -10,8 +10,8 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
 
-  // Don't show TitleBar on Settings page (it has its own header)
-  const showTitleBar = location.pathname !== '/settings';
+  // Show TitleBar on all pages
+  const showTitleBar = true;
 
   const titleBarVariants = {
     initial: {

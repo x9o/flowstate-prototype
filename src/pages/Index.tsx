@@ -31,17 +31,93 @@ const getGreetingData = () => {
   let greeting;
   let icon: 'sun' | 'moon';
 
-  if (hour >= 5 && hour < 12) {
+  // Midnight hours (12 AM - 4 AM)
+  if (hour >= 0 && hour < 4) {
+    const nightGreetings = [
+      "Hello, night owl",
+      "Burning the midnight oil?",
+      "Late night productivity session",
+      "Early bird or night owl?",
+      "Hello, early morning coder"
+    ];
+    greeting = nightGreetings[Math.floor(Math.random() * nightGreetings.length)];
+    icon = 'moon';
+  }
+  // Early morning (4 AM - 5 AM)
+  else if (hour >= 4 && hour < 5) {
+    greeting = "Hello, early bird";
+    icon = 'moon';
+  }
+  // Morning (5 AM - 9 AM)
+  else if (hour >= 5 && hour < 9) {
+    const morningGreetings = [
+      "Good morning",
+      "Rise and shine",
+      "Ready to conquer the day?",
+      "Hello, early achiever",
+      "Morning productivity mode"
+    ];
+    greeting = morningGreetings[Math.floor(Math.random() * morningGreetings.length)];
+    icon = 'sun';
+  }
+  // Late morning (9 AM - 11 AM)
+  else if (hour >= 9 && hour < 11) {
     greeting = "Good morning";
     icon = 'sun';
-  } else if (hour >= 12 && hour < 17) {
+  }
+  // Late morning to noon (11 AM - 12 PM)
+  else if (hour >= 11 && hour < 12) {
+    const lateMorningGreetings = [
+      "Good morning",
+      "Almost noon!",
+      "Ready for the day ahead?",
+      "Morning productivity session"
+    ];
+    greeting = lateMorningGreetings[Math.floor(Math.random() * lateMorningGreetings.length)];
+    icon = 'sun';
+  }
+  // Early afternoon (12 PM - 2 PM)
+  else if (hour >= 12 && hour < 14) {
+    const afternoonGreetings = [
+      "Good afternoon",
+      "Lunch break productivity",
+      "Afternoon focus time",
+      "Hello, afternoon achiever"
+    ];
+    greeting = afternoonGreetings[Math.floor(Math.random() * afternoonGreetings.length)];
+    icon = 'sun';
+  }
+  // Late afternoon (2 PM - 5 PM)
+  else if (hour >= 14 && hour < 17) {
     greeting = "Good afternoon";
     icon = 'sun';
-  } else if (hour >= 17 && hour < 21) {
+  }
+  // Early evening (5 PM - 7 PM)
+  else if (hour >= 17 && hour < 19) {
+    const eveningGreetings = [
+      "Good evening",
+      "Winding down the day",
+      "Evening focus session",
+      "Hello, evening warrior"
+    ];
+    greeting = eveningGreetings[Math.floor(Math.random() * eveningGreetings.length)];
+    icon = 'sun';
+  }
+  // Late evening (7 PM - 9 PM)
+  else if (hour >= 19 && hour < 21) {
     greeting = "Good evening";
     icon = 'sun';
-  } else {
-    greeting = "Good night";
+  }
+  // Night (9 PM - 12 AM)
+  else {
+    const nightGreetings = [
+      "Good night",
+      "Evening productivity session",
+      "Late night coding session",
+      "Hello, night owl",
+      "Time to focus"
+    ];
+    greeting = nightGreetings[Math.floor(Math.random() * nightGreetings.length)];
     icon = 'moon';
   }
 
@@ -668,7 +744,7 @@ const Index = () => {
                       ) : (
                         <Moon className="w-12 h-12 text-mint" />
                       )}
-                      <h1 className="text-5xl font-bold transition-all duration-500 ease-in-out bg-gradient-to-r from-foreground to-mint bg-clip-text text-transparent">
+                      <h1 className="text-4xl sm:text-5xl font-bold transition-all duration-500 ease-in-out bg-gradient-to-r from-foreground to-mint bg-clip-text text-transparent whitespace-nowrap">
                         {greeting}
                       </h1>
                     </div>
