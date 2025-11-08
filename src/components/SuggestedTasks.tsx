@@ -65,6 +65,9 @@ export const SuggestedTasks: React.FC<SuggestedTasksProps> = ({
               <div className="flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-mint" />
                 <h3 className="text-lg font-semibold">Suggested Tasks</h3>
+                <span className="px-2 py-1 text-xs font-bold bg-gradient-to-r from-mint/20 to-mint/10 text-mint border border-mint/30 rounded-full">
+                  PRO
+                </span>
               </div>
             </div>
             <div className="flex items-center justify-center py-8">
@@ -90,6 +93,9 @@ export const SuggestedTasks: React.FC<SuggestedTasksProps> = ({
               <div className="flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-mint" />
                 <h3 className="text-lg font-semibold">Suggested Tasks</h3>
+                <span className="px-2 py-1 text-xs font-bold bg-gradient-to-r from-mint/20 to-mint/10 text-mint border border-mint/30 rounded-full">
+                  PRO
+                </span>
               </div>
               <Button
                 variant="ghost"
@@ -124,6 +130,9 @@ export const SuggestedTasks: React.FC<SuggestedTasksProps> = ({
             <div className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-mint" />
               <h3 className="text-lg font-semibold">Suggested Tasks</h3>
+              <span className="px-2 py-1 text-xs font-bold bg-gradient-to-r from-mint/20 to-mint/10 text-mint border border-mint/30 rounded-full">
+                PRO
+              </span>
               {suggestionsFromCache && (
                 <span className="text-xs text-muted-foreground ml-2">(cached)</span>
               )}

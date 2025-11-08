@@ -296,8 +296,19 @@ class AnalyticsService {
       this.saveData();
     }
   }
+
+  /**
+   * Get all analytics data (for stats page)
+   */
+  getAnalytics(): AnalyticsData {
+    return { ...this.data };
+  }
 }
 
 // Singleton instance
 export const analyticsService = new AnalyticsService();
+
+// Named export for the class for instantiation if needed
+export { AnalyticsService };
+
 export type { AnalyticsData, SessionHistoryEntry, AllTimeStats };

@@ -783,7 +783,7 @@ const Index = () => {
                     </button>
 
                     <button
-                      onClick={() => console.log('Stats clicked')}
+                      onClick={() => navigate('/stats')}
                       className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
                         theme === 'dark'
                           ? 'bg-card border-border hover:border-mint'
