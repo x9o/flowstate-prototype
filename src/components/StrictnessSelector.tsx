@@ -1,0 +1,228 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Settings, Shield, AlertTriangle, CheckCircle, X, Lightbulb, Check, Ban, HelpCircle } from "lucide-react";
+import { useTheme } from '@/contexts/ThemeContext';
+import { useNotifications } from '@/components/ui/notification';
+
+interface StrictnessExample {
+  type: 'allow' | 'block' | 'question';
+  text: string;
+}
+
+interface StrictnessLevel {
+  id: 'lenient' | 'balanced' | 'strict';
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  iconBg: string;
+  examples: StrictnessExample[];
+}
+
+const strictnessLevels: StrictnessLevel[] = [
+  {
+    id: 'lenient',
+    name: 'Lenient',
+    description: 'Allows most activities, blocks only obvious distractions',
+    icon: <Shield className="w-5 h-5" />,
+    color: 'text-green-500',
+    iconBg: 'bg-green-500/10',
+    examples: [
+      { type: 'allow', text: 'Research sites, documentation, work tools' },
+      { type: 'allow', text: 'Educational content, industry news' },
+      { type: 'block', text: 'Social media, entertainment sites, games' }
+    ]
+  },
+  {
+    id: 'balanced',
+    name: 'Balanced',
+    description: 'Smart filtering with focus on work-related activities',
+    icon: <CheckCircle className="w-5 h-5" />,
+    color: 'text-blue-500',
+    iconBg: 'bg-blue-500/10',
+    examples: [
+      { type: 'allow', text: 'Direct work tools, essential research' },
+      { type: 'question', text: 'News sites, general browsing' },
+      { type: 'block', text: 'Social media, videos, entertainment' }
+    ]
+  },
+  {
+    id: 'strict',
+    name: 'Strict',
+    description: 'Maximum focus mode - only essential work tools allowed',
+    icon: <AlertTriangle className="w-5 h-5" />,
+    color: 'text-red-500',
+    iconBg: 'bg-red-500/10',
+    examples: [
+      { type: 'allow', text: 'Code editors, work documents, essential tools' },
+      { type: 'block', text: 'News, social media, entertainment, general browsing' }
+    ]
+  }
+];
+
+interface StrictnessSelectorProps {
+  currentLevel: 'lenient' | 'balanced' | 'strict';
+  onLevelChange: (level: 'lenient' | 'balanced' | 'strict') => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function StrictnessSelector({ currentLevel, onLevelChange, isOpen, onOpenChange }: StrictnessSelectorProps) {
+  const { theme } = useTheme();
+  const { addNotification } = useNotifications();
+
+  const handleLevelSelect = (level: 'lenient' | 'balanced' | 'strict') => {
+    onLevelChange(level);
+    onOpenChange(false);
+
+    // Show notification for the change
+    const selectedLevel = strictnessLevels.find(l => l.id === level);
+    if (selectedLevel) {
+      addNotification({
+        type: 'success',
+        title: `AI Strictness Changed`,
+        message: `Switched to ${selectedLevel.name} mode - ${selectedLevel.description.toLowerCase()}`,
+        duration: 4000,
+        icon: <Check className="w-5 h-5" />
+      });
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className={`w-full max-w-lg rounded-2xl p-6 shadow-2xl ${
+          theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-start gap-3">
+            <div className={`w-10 h-10 rounded-full bg-mint/10 flex items-center justify-center flex-shrink-0`}>
+              <Settings className="w-5 h-5 text-mint" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-1">AI Strictness Level</h3>
+              <p className="text-sm text-muted-foreground">
+                Choose how strictly the AI should monitor your activity
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className={`p-1 rounded-lg transition-colors ${
+              theme === 'dark'
+                ? 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Strictness Levels */}
+        <div className="space-y-3 mb-6">
+          {strictnessLevels.map((level) => (
+            <button
+              key={level.id}
+              onClick={() => handleLevelSelect(level.id)}
+              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+                currentLevel === level.id
+                  ? 'border-mint bg-mint/5'
+                  : theme === 'dark'
+                    ? 'border-border hover:border-mint/50 hover:bg-muted/30'
+                    : 'border-gray-200 hover:border-mint/50 hover:bg-gray-50'
+              }`}
+            >
+              {/* Level Header */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-10 h-10 rounded-lg ${level.iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <div className={level.color}>
+                    {level.icon}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold">{level.name}</span>
+                    {currentLevel === level.id && (
+                      <Badge className="text-xs bg-mint text-white">
+                        Current
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {level.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Examples */}
+              <div className={`p-3 rounded-lg text-xs space-y-2 ${
+                theme === 'dark' ? 'bg-muted/30' : 'bg-gray-50'
+              }`}>
+                {level.examples.map((example, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    {example.type === 'allow' && (
+                      <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                    )}
+                    {example.type === 'block' && (
+                      <Ban className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                    )}
+                    {example.type === 'question' && (
+                      <HelpCircle className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                    )}
+                    <span className="text-muted-foreground">{example.text}</span>
+                  </div>
+                ))}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Info Footer */}
+        <div className={`rounded-xl p-4 ${
+          theme === 'dark'
+            ? 'bg-muted/30 border border-border'
+            : 'bg-blue-50 border border-blue-200'
+        }`}>
+          <div className="flex items-start gap-2">
+            <Lightbulb className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground">
+              This setting affects how the AI determines if an activity is productive during your focus session. You can change this anytime before starting a session.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// Export a trigger button component
+interface StrictnessTriggerProps {
+  onClick: () => void;
+}
+
+export function StrictnessTrigger({ onClick }: StrictnessTriggerProps) {
+  const { theme } = useTheme();
+
+  return (
+    <button
+      onClick={onClick}
+      className={`p-2 rounded-lg transition-colors pointer-events-auto z-10 ${
+        theme === 'dark'
+          ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
+          : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+      }`}
+      title="AI Strictness Level"
+    >
+      <Settings className="w-5 h-5" />
+    </button>
+  );
+}

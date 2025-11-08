@@ -26,8 +26,28 @@ let sessionStats = {
 // Stats update interval
 let statsUpdateInterval = null;
 
-// AI System Prompt
-const SYSTEM_PROMPT = `
+// AI System Prompts for different strictness levels
+const SYSTEM_PROMPTS = {
+  lenient: `
+You are a lenient productivity AI. Your function is to determine if a user's activity is reasonably productive for their stated goal. Your response must ALWAYS be a single word: either YES or NO.
+
+Guidelines:
+
+Very Permissive: Allow most activities unless they are clearly entertainment or completely unrelated.
+Assume Good Intent: Always give the benefit of doubt. If there's any chance it could be work-related, respond YES.
+Educational Content: All learning, research, news, and industry content should be YES.
+Tools & Utilities: Development tools, system utilities, reference sites are always YES.
+Only Block: Pure entertainment (games, streaming, social media scrolling) when clearly non-work-related.
+
+Examples:
+GOAL: "Write a research paper"
+ACTIVITY: "JSTOR" -> YES (supports research)
+ACTIVITY: "YouTube - Educational Tutorial" -> YES (learning)
+ACTIVITY: "Reddit - r/programming" -> YES (industry discussion)
+ACTIVITY: "Netflix" -> NO (entertainment)
+ACTIVITY: "Instagram" -> NO (social media)
+`,
+  balanced: `
 You are a balanced productivity AI. Your function is to determine if a user's activity is reasonably productive for their stated goal. Your response must ALWAYS be a single word: either YES or NO.
 
 Guidelines:
@@ -35,14 +55,38 @@ Guidelines:
 Reasonable Support: Respond YES if the activity directly supports the goal OR is a common secondary tool that aids focus (e.g., instrumental music, documentation).
 Assume Good Intent: If the window title is ambiguous or technical (e.g., "npm start", "localhost:3000", "Untitled"), assume it is work-related and respond YES.
 Block Obvious Distractions: Social media, entertainment sites, and clearly unrelated content are NO.
-Example:
+Consider Context: General browsing, news, and non-specific content should be questioned.
 
+Examples:
 GOAL: "Write a research paper"
 ACTIVITY: "JSTOR" -> YES (supports research paper)
 ACTIVITY: "Google Docs - Research Paper Draft" -> YES (supports goal)
 ACTIVITY: "Reddit - r/askscience" -> YES (potentially supports goal)
 ACTIVITY: "Reddit - r/funny" -> NO (does not support goal)
-`;
+`,
+  strict: `
+You are a strict productivity AI. Your function is to determine if a user's activity is productive for their stated goal. Your response must ALWAYS be a single word: either YES or NO.
+
+Guidelines:
+
+High Standards: Only allow activities that are clearly and directly productive for the stated goal.
+Question Everything: If there's any doubt about productivity, respond NO.
+Direct Tools Only: Code editors, work documents, direct research related to goal are YES.
+Block General Browsing: News, social media, general research, tutorials (unless directly goal-related) are NO.
+No Ambiguity: Technical terms, localhost, or unclear activities should be NO unless explicitly work-related.
+
+Examples:
+GOAL: "Write a research paper"
+ACTIVITY: "JSTOR - Research Database" -> YES (direct research)
+ACTIVITY: "Google Docs - Paper Draft" -> YES (direct work)
+ACTIVITY: "Stack Overflow - Programming Question" -> NO (off-topic)
+ACTIVITY: "News Website" -> NO (general browsing)
+ACTIVITY: "YouTube Tutorial" -> NO (learning, not doing)
+`
+};
+
+// Default to balanced for backward compatibility
+let currentStrictnessLevel = 'balanced';
 
 /**
  * Format window information for AI analysis
@@ -157,21 +201,18 @@ async function checkProductivity(goal, windowInfo, sendToRenderer) {
   // Create cache key
   const goalString = goal.toLowerCase().trim();
   const cacheKey = `${goalString}:::${enhancedInfo.formattedInfo.toLowerCase().trim()}`;
-  console.log(`CACHE KEY: Generated cache key: "${cacheKey}"`);
-  console.log(`CACHE: Current cache size: ${productivityCache.size} entries`);
 
   // Check cache first
   if (productivityCache.has(cacheKey)) {
     const cachedResult = productivityCache.get(cacheKey);
-    console.log(`CACHE: HIT - Using cached verdict: ${cachedResult ? 'YES' : 'NO'} for key: ${cacheKey}`);
+    console.log(`📋 ${enhancedInfo.title} - CACHE: ${cachedResult ? 'YES' : 'NO'}`);
     updateStats(enhancedInfo, cachedResult);
     return cachedResult;
-  } else {
-    console.log(`CACHE: MISS - No cached result for key: ${cacheKey}`);
-    console.log(`CACHE: Current cache entries:`, Array.from(productivityCache.entries()));
   }
 
-  const prompt = `${SYSTEM_PROMPT}
+  const systemPrompt = SYSTEM_PROMPTS[currentStrictnessLevel] || SYSTEM_PROMPTS.balanced;
+
+  const prompt = `${systemPrompt}
 
 [USER REQUEST]
 GOAL: "${goal}"
@@ -179,18 +220,16 @@ ${enhancedInfo.formattedInfo}
 YOUR RESPONSE:`;
 
   try {
-    console.log("AI: Calling AI API for new verdict...");
+    console.log(`📋 ${enhancedInfo.title} - AI: Checking...`);
     const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     const response = await model.generateContent(prompt);
 
     const aiResponse = response.response.text()?.trim() || "";
-    console.log(`AI: Response: ${aiResponse}`);
-
     const isProductive = aiResponse.toUpperCase() === "YES";
 
     // Cache the result
     productivityCache.set(cacheKey, isProductive);
-    console.log(`CACHE: Cached verdict for future reference: ${isProductive ? 'YES' : 'NO'} for key: ${cacheKey}`);
+    console.log(`📋 ${enhancedInfo.title} - AI: ${isProductive ? 'YES' : 'NO'}`);
 
     updateStats(enhancedInfo, isProductive);
 
@@ -223,6 +262,23 @@ YOUR RESPONSE:`;
 /**
  * Check if user marked activity as productive and update cache accordingly
  */
+// Extract domain from URL
+function extractDomain(url) {
+  if (!url) return null;
+  try {
+    const urlObj = new URL(url);
+    let domain = urlObj.hostname;
+    // Remove www. prefix if present
+    if (domain.startsWith('www.')) {
+      domain = domain.substring(4);
+    }
+    return domain;
+  } catch (error) {
+    console.log('Could not parse URL:', url, error);
+    return null;
+  }
+}
+
 async function checkWhitelistAndCache(goal, enhancedInfo, __dirname) {
   const whitelistFile = join(__dirname, 'whitelist.txt');
 
@@ -232,38 +288,67 @@ async function checkWhitelistAndCache(goal, enhancedInfo, __dirname) {
 
     if (fileExists) {
       const whitelistedActivity = await fs.readFile(whitelistFile, 'utf8');
-      console.log(`CHECK: Found whitelist file with content: "${whitelistedActivity.trim()}"`);
-      console.log(`CHECK: Comparing with current window: "${enhancedInfo.title.trim()}"`);
 
-      // Flexible matching - check if the whitelist content matches the window
+      // Extract domain for potential domain-based caching
+      const domain = extractDomain(enhancedInfo.url);
       const windowTitle = enhancedInfo.title.trim().toLowerCase();
       const whitelistContent = whitelistedActivity.trim().toLowerCase();
       const appName = enhancedInfo.owner.name.trim().toLowerCase();
 
-      const isMatch =
+      // Enhanced matching - check for exact matches, partial matches, and domain matches
+      let isMatch = false;
+      let cacheType = '';
+
+      if (domain && whitelistContent === domain) {
+        // Domain-level whitelisting (new feature)
+        isMatch = true;
+        cacheType = 'domain';
+      } else if (enhancedInfo.url && whitelistContent === enhancedInfo.url) {
+        // Page-level whitelisting (specific URL match)
+        isMatch = true;
+        cacheType = 'page';
+      } else if (
         windowTitle === whitelistContent || // Exact match
         windowTitle.includes(whitelistContent) || // Whitelist content is part of window title
         whitelistContent.includes(windowTitle) || // Window title is part of whitelist content
         appName === whitelistContent || // App name matches
-        whitelistContent.includes(appName); // Whitelist includes app name
+        whitelistContent.includes(appName) // Whitelist includes app name
+      ) {
+        // Title-level whitelisting (existing functionality)
+        isMatch = true;
+        cacheType = 'title';
+      }
 
       if (isMatch) {
-        // Create the same cache key format as in checkProductivity
         const goalString = goal.toLowerCase().trim();
-        const cacheKey = `${goalString}:::${enhancedInfo.formattedInfo.toLowerCase().trim()}`;
 
-        // Force update cache to YES
-        productivityCache.set(cacheKey, true);
-        console.log(`SUCCESS: User marked "${enhancedInfo.title}" in ${enhancedInfo.owner.name} as productive - updated cache to YES`);
-        console.log(`CACHE KEY: ${cacheKey}`);
+        // Create cache keys for both title and domain
+        const titleCacheKey = `${goalString}:::${enhancedInfo.formattedInfo.toLowerCase().trim()}`;
+
+        // Always cache the specific window title
+        productivityCache.set(titleCacheKey, true);
+
+        // If it's a domain match, also cache all potential variations of this domain
+        if (cacheType === 'domain' && domain) {
+          // Create patterns that would match different pages from the same domain
+          const domainPatterns = [
+            `${goalString}:::*${domain.toLowerCase()}*`, // Domain anywhere in the activity
+            `${goalString}:::*www.${domain.toLowerCase()}*`, // Domain with www prefix
+          ];
+
+          domainPatterns.forEach(pattern => {
+            productivityCache.set(pattern, true);
+          });
+        } else if (cacheType === 'page' && enhancedInfo.url) {
+          // For page-level whitelisting, cache the specific URL and title
+          const urlCacheKey = `${goalString}:::*${enhancedInfo.url.toLowerCase()}*`;
+          productivityCache.set(urlCacheKey, true);
+        }
 
         // Clean up whitelist file after processing
         await fs.unlink(whitelistFile);
-        console.log(`CLEANUP: Removed whitelist file`);
 
         return true; // Indicate that whitelist was processed
-      } else {
-        console.log(`CHECK: No match found between whitelist and current window`);
       }
     }
   } catch (error) {
@@ -276,22 +361,10 @@ async function checkWhitelistAndCache(goal, enhancedInfo, __dirname) {
 /**
  * Show blocking overlay
  */
-async function showBlockingOverlay(goal, windowInfo, __dirname) {
-  console.log("\n" + "=".repeat(50));
-  console.log("BLOCKED: Activity not productive - showing blocking overlay!");
-  console.log("=".repeat(50));
-  console.log(`Window: ${windowInfo.title}`);
-  console.log(`App: ${windowInfo.owner.name}`);
-  console.log(`Goal: ${goal}`);
-  console.log("=".repeat(50) + "\n");
-
+async function showBlockingOverlay(goal, windowInfo, __dirname, blockReason = 'ai') {
   return new Promise((resolve) => {
     const overlayPath = join(__dirname, 'overlay', 'main.cjs');
-
-    // Use process.execPath which gives us the electron executable path
     const electronPath = process.execPath;
-
-    console.log(`Using electron path: ${electronPath}`);
 
     const electronProcess = spawn(electronPath, [overlayPath], {
       stdio: 'ignore',
@@ -302,6 +375,8 @@ async function showBlockingOverlay(goal, windowInfo, __dirname) {
         BLOCK_ACTIVITY: windowInfo.title,
         BLOCK_APP: windowInfo.owner.name,
         BLOCK_CATEGORY: windowInfo.appCategory || 'Unknown',
+        BLOCK_URL: windowInfo.url || '',
+        BLOCK_REASON: blockReason,
         BLOCK_STATS_JSON: JSON.stringify({
           blocksStopped: sessionStats.blockedAttempts,
           sessionStartTime: sessionStats.sessionStartTime
@@ -311,12 +386,9 @@ async function showBlockingOverlay(goal, windowInfo, __dirname) {
     });
 
     electronProcess.on('close', async () => {
-      console.log("SUCCESS: Blocking screen dismissed\n");
-
       // Check if user marked the activity as productive
       const enhancedInfo = getEnhancedActivityDescription(windowInfo);
       await checkWhitelistAndCache(goal, enhancedInfo, __dirname);
-
       resolve();
     });
 
@@ -335,10 +407,6 @@ function checkLists(windowTitle, appName, url, whitelist, blocklist) {
   const lowerApp = appName.toLowerCase();
   const lowerUrl = url?.toLowerCase() || '';
 
-  console.log(`CHECK: Checking lists for: "${lowerTitle}" (${lowerApp})`);
-  console.log(`LIST: Whitelist has ${whitelist.length} items:`, whitelist.map(w => ({name: w.name, pattern: w.pattern})));
-  console.log(`LIST: Blocklist has ${blocklist.length} items:`, blocklist.map(b => ({name: b.name, pattern: b.pattern})));
-
   // Check blocklist first - if blocked, always block
   for (const item of blocklist) {
     const patterns = item.pattern.toLowerCase().split('|');
@@ -355,14 +423,11 @@ function checkLists(windowTitle, appName, url, whitelist, blocklist) {
   // Check whitelist - if whitelisted, always allow
   for (const item of whitelist) {
     const patterns = item.pattern.toLowerCase().split('|');
-    console.log(`CHECK: Testing whitelist item: ${item.name} with patterns:`, patterns);
     for (const pattern of patterns) {
       const trimmedPattern = pattern.trim();
-      console.log(`CHECK: Testing pattern "${trimmedPattern}" against app "${lowerApp}" and title "${lowerTitle}"`);
       if (lowerTitle.includes(trimmedPattern) ||
           lowerApp.includes(trimmedPattern) ||
           lowerUrl.includes(trimmedPattern)) {
-        console.log(`ALLOWED: WHITELISTED - Matched pattern "${trimmedPattern}" in ${item.name}`);
         return { type: 'whitelisted', item };
       }
     }
@@ -374,14 +439,14 @@ function checkLists(windowTitle, appName, url, whitelist, blocklist) {
 /**
  * Main monitoring loop
  */
-async function startMonitoring(goals, duration, sendToRenderer, __dirname, whitelist = [], blocklist = []) {
+async function startMonitoring(goals, duration, sendToRenderer, __dirname, whitelist = [], blocklist = [], strictnessLevel = 'balanced') {
   const goal = goals[0]; // Use first goal
   sessionStats.sessionStartTime = Date.now();
 
-  console.log(`GOAL: Starting monitoring for goal: ${goal}`);
-  console.log(`DURATION: ${duration} minutes`);
-  console.log(`LIST: Whitelist: ${whitelist.length} items`);
-  console.log(`LIST: Blocklist: ${blocklist.length} items`);
+  // Set the strictness level for this session
+  currentStrictnessLevel = strictnessLevel;
+
+  console.log(`🎯 Monitoring started: "${goal}" (${strictnessLevel} mode)`);
 
   // Start periodic stats updates to renderer (every 5 seconds)
   if (sendToRenderer) {
@@ -403,7 +468,6 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
           // Check if window is FlowState itself - always whitelist
           if (currentWindow.owner.name.toLowerCase().includes('flowstate') ||
               currentWindow.title.toLowerCase().includes('flowstate')) {
-            console.log('ALLOWED: FlowState detected - whitelisted');
             await new Promise(resolve => setTimeout(resolve, pollInterval));
             continue;
           }
@@ -412,8 +476,6 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
           if (!previousWindow ||
               currentWindow.title !== previousWindow.title ||
               currentWindow.owner.name !== previousWindow.owner.name) {
-
-            console.log(`\nCHECK: Window: ${currentWindow.title} (${currentWindow.owner.name})`);
 
             // Check whitelist/blocklist first
             const listCheck = checkLists(
@@ -427,7 +489,7 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
             const enhancedInfo = getEnhancedActivityDescription(currentWindow);
 
             if (listCheck.type === 'blocked') {
-              console.log(`BLOCKED: BLOCKLISTED - ${listCheck.item.name} - always blocked`);
+              console.log(`📋 ${currentWindow.title} - BLOCKLIST: NO`);
               updateStats(enhancedInfo, false);
 
               // Send block event to renderer
@@ -439,28 +501,22 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
                 });
               }
 
-              await showBlockingOverlay(goal, currentWindow, __dirname);
+              await showBlockingOverlay(goal, currentWindow, __dirname, 'blocklist');
             } else if (listCheck.type === 'whitelisted') {
-              console.log(`ALLOWED: WHITELISTED - ${listCheck.item.name} - always allowed`);
+              console.log(`📋 ${currentWindow.title} - WHITELIST: YES`);
               updateStats(enhancedInfo, true);
-              console.log("SUCCESS: Productive activity (whitelisted) - continuing...\n");
             } else {
               // Check whitelist file override (from "mark as productive" button)
-              console.log("CHECK: Checking whitelist file override...");
               const whitelistProcessed = await checkWhitelistAndCache(goal, enhancedInfo, __dirname);
 
               if (whitelistProcessed) {
-                console.log("SUCCESS: Whitelist override applied - activity marked as productive");
+                console.log(`📋 ${currentWindow.title} - WHITELIST: YES (user override)`);
                 updateStats(enhancedInfo, true);
-                console.log("SUCCESS: Productive activity (whitelisted) - continuing...\n");
               } else {
                 // Check with AI
-                console.log("AI CHECK: Checking productivity with AI...");
                 const isProductive = await checkProductivity(goal, currentWindow, sendToRenderer);
 
-                if (isProductive) {
-                  console.log("SUCCESS: Productive activity\n");
-                } else {
+                if (!isProductive) {
                   // Send block event to renderer
                   if (sendToRenderer) {
                     sendToRenderer('activity-blocked', {
@@ -470,7 +526,7 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
                     });
                   }
 
-                  await showBlockingOverlay(goal, currentWindow, __dirname);
+                  await showBlockingOverlay(goal, currentWindow, __dirname, 'ai');
                 }
               }
             }
@@ -500,7 +556,7 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
         statsUpdateInterval = null;
       }
 
-      console.log('STOP: Monitoring stopped');
+      console.log('🛑 Monitoring stopped');
 
       // Return final stats for analytics persistence
       return serializeStats();

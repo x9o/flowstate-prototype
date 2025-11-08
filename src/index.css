@@ -152,6 +152,27 @@ All colors MUST be HSL.
     user-select: none;
   }
 
+  /* Ensure all buttons are clickable and interactive */
+  button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+  }
+
+  /* Force cursor pointer on buttons that are positioned over inputs */
+  input ~ * button,
+  input + * button,
+  [class*="absolute"] button,
+  [class*="relative"] button {
+    cursor: pointer !important;
+  }
+
+  /* Specific override for buttons inside input containers */
+  .relative button,
+  .absolute button {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
   body {
     @apply bg-background text-foreground transition-colors duration-300;
     font-family: 'TikTok Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -355,4 +376,18 @@ All colors MUST be HSL.
       font-size: 1.125rem !important;
     }
   }
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: 250% 0, center;
+  }
+  100% {
+    background-position: -250% 0, center;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer linear infinite;
 }

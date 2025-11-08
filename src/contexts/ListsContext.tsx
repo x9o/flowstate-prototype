@@ -116,17 +116,17 @@ export const ListsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addToWhitelist = (item: Omit<ListItem, 'id'>) => {
     const newItem: ListItem = {
       ...item,
-      id: `wl-${Date.now()}`,
+      id: `wl-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     };
-    setWhitelist([...whitelist, newItem]);
+    setWhitelist(prev => [...prev, newItem]);
   };
 
   const addToBlocklist = (item: Omit<ListItem, 'id'>) => {
     const newItem: ListItem = {
       ...item,
-      id: `bl-${Date.now()}`,
+      id: `bl-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     };
-    setBlocklist([...blocklist, newItem]);
+    setBlocklist(prev => [...prev, newItem]);
   };
 
   const removeFromWhitelist = (id: string) => {

@@ -21,23 +21,29 @@ let monitoringState = {
 };
 
 function createWindow() {
+  // Get screen dimensions
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+
   // Create the browser window
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 700, // Reduced minimum width for better responsiveness
-    minHeight: 500, // Reduced minimum height for better responsiveness
+    width: Math.min(1400, screenWidth - 100),
+    height: Math.min(900, screenHeight - 100),
+    minWidth: 1000,
+    minHeight: 700,
     frame: false, // Remove the default frame
     titleBarStyle: 'hidden', // Hide the title bar
     title: 'Flowstate', // Set the window title
     icon: path.join(__dirname, 'public', 'flowstate.png'), // Set the app icon
+    center: true, // Center the window on screen
+    show: false, // Don't show until ready-to-show
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
       preload: path.join(__dirname, 'preload.cjs')
     },
-    show: false, // Don't show until ready-to-show
   });
 
   // Load the app
@@ -146,7 +152,7 @@ ipcMain.handle('get-theme', () => {
 });
 
 // Monitoring IPC handlers
-ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blocklist) => {
+ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blocklist, strictnessLevel = 'balanced') => {
   try {
     if (monitoringInstance) {
       console.log('Monitoring already active, stopping previous instance');
@@ -157,6 +163,7 @@ ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blo
     console.log('Starting monitoring with goals:', goals, 'duration:', duration);
     console.log('Whitelist:', whitelist?.length || 0, 'items');
     console.log('Blocklist:', blocklist?.length || 0, 'items');
+    console.log('Strictness Level:', strictnessLevel);
 
     // Update monitoring state
     monitoringState.isActive = true;
@@ -180,7 +187,8 @@ ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blo
       sendToRenderer,
       __dirname,
       whitelist || [],
-      blocklist || []
+      blocklist || [],
+      strictnessLevel
     );
 
     // Minimize the FlowState window

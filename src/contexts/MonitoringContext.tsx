@@ -19,6 +19,8 @@ interface MonitoringContextType {
   monitoringState: MonitoringState;
   isPaused: boolean;
   recentBlockedApps: BlockedApp[];
+  strictnessLevel: 'lenient' | 'balanced' | 'strict';
+  setStrictnessLevel: (level: 'lenient' | 'balanced' | 'strict') => void;
   startMonitoring: (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]) => Promise<void>;
   pauseMonitoring: () => Promise<void>;
   resumeMonitoring: () => Promise<void>;
@@ -48,6 +50,7 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
 
   const [isPaused, setIsPaused] = useState(false);
   const [recentBlockedApps, setRecentBlockedApps] = useState<BlockedApp[]>([]);
+  const [strictnessLevel, setStrictnessLevel] = useState<'lenient' | 'balanced' | 'strict'>('balanced');
 
   // Start monitoring session
   const startMonitoring = async (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]): Promise<void> => {
@@ -64,7 +67,7 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
       // Clear recent blocked apps when starting a new session
       setRecentBlockedApps([]);
 
-      const result = await window.electronAPI.startMonitoring(goals, duration, whitelist, blocklist);
+      const result = await window.electronAPI.startMonitoring(goals, duration, whitelist, blocklist, strictnessLevel);
       if (!result.success) {
         throw new Error(result.error || 'Failed to start monitoring');
       }
@@ -202,6 +205,8 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
     monitoringState,
     isPaused,
     recentBlockedApps,
+    strictnessLevel,
+    setStrictnessLevel,
     startMonitoring,
     pauseMonitoring,
     resumeMonitoring,

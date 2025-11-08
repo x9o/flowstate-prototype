@@ -4,11 +4,30 @@ const fs = require('fs').promises;
 
 let mainWindow = null;
 
+// Extract domain from URL if available
+function extractDomain(url) {
+  if (!url) return null;
+  try {
+    const urlObj = new URL(url);
+    let domain = urlObj.hostname;
+    // Remove www. prefix if present
+    if (domain.startsWith('www.')) {
+      domain = domain.substring(4);
+    }
+    return domain;
+  } catch (error) {
+    console.log('Could not parse URL:', url, error);
+    return null;
+  }
+}
+
 // Get data from environment variables (better Unicode support than command-line args)
 let goal = process.env.BLOCK_GOAL || 'your goal';
 let activity = process.env.BLOCK_ACTIVITY || 'unproductive activity';
 let blockedApp = process.env.BLOCK_APP || 'Unknown App';
 let category = process.env.BLOCK_CATEGORY || 'Unknown';
+let blockedUrl = process.env.BLOCK_URL || '';
+let domain = extractDomain(blockedUrl);
 let sessionStats = { blocksStopped: 0, sessionStartTime: Date.now() };
 
 // Parse session stats from JSON if available
@@ -25,6 +44,8 @@ console.log('Goal:', goal);
 console.log('Activity:', activity);
 console.log('App:', blockedApp);
 console.log('Category:', category);
+console.log('URL:', blockedUrl);
+console.log('Domain:', domain);
 console.log('Session stats:', sessionStats);
 
 function createBlockingWindow() {
@@ -59,12 +80,16 @@ function createBlockingWindow() {
 
   // Send data to renderer once loaded
   mainWindow.webContents.on('did-finish-load', () => {
-    console.log('Window loaded, sending blocking data:', { goal, activity, sessionStats });
+    console.log('Window loaded, sending blocking data:', { goal, activity, domain, blockedUrl, sessionStats });
     mainWindow.webContents.send('blocking-data', {
       goal: goal,
       activity: activity,
+      app: blockedApp,
+      domain: domain,
+      url: blockedUrl,
       blocksStopped: sessionStats.blocksStopped,
-      sessionStartTime: sessionStats.sessionStartTime
+      sessionStartTime: sessionStats.sessionStartTime,
+      blockReason: process.env.BLOCK_REASON || 'ai' // Default to 'ai' if not specified
     });
   });
 
@@ -96,21 +121,40 @@ app.whenReady().then(() => {
   });
 
   // Handle whitelist action from renderer
-  ipcMain.on('mark-as-productive', async () => {
-    console.log('Received mark-as-productive signal from renderer');
+  ipcMain.on('mark-as-productive', async (event, data) => {
+    console.log('Received mark-as-productive signal from renderer:', data);
 
     try {
-      // Write the activity to the whitelist file for the main app to read
+      let whitelistContent = '';
+
+      if (data && data.type === 'app') {
+        // Mark app as productive (use app name)
+        whitelistContent = blockedApp;
+        console.log(`Marking app as productive: ${whitelistContent}`);
+      } else if (data && data.type === 'page') {
+        // Mark specific page as productive (use full URL if available, otherwise title)
+        whitelistContent = blockedUrl || activity;
+        console.log(`Marking specific page as productive: ${whitelistContent}`);
+      } else if (data && data.type === 'domain') {
+        // Mark domain as productive
+        whitelistContent = domain || activity;
+        console.log(`Marking domain as productive: ${whitelistContent}`);
+      } else {
+        // General/legacy behavior - use activity title or domain
+        whitelistContent = domain || activity;
+        console.log(`Marking as productive (general): ${whitelistContent}`);
+      }
+
       const whitelistFile = path.join(__dirname, '..', 'whitelist.txt');
-      await fs.writeFile(whitelistFile, activity, 'utf8');
-      console.log(`✅ Written "${activity}" to whitelist file`);
+      await fs.writeFile(whitelistFile, whitelistContent, 'utf8');
+      console.log(`✅ Written "${whitelistContent}" to whitelist file`);
     } catch (error) {
       console.error(`❌ Error writing to whitelist file: ${error}`);
     }
 
     // Close the window
     if (mainWindow) {
-      console.log(`Activity "${activity}" marked as productive, closing window`);
+      console.log(`Activity marked as productive, closing window`);
       mainWindow.close();
     } else {
       console.log('No main window to close');

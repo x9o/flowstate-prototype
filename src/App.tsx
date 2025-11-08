@@ -11,6 +11,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { MonitoringProvider } from "@/contexts/MonitoringContext";
 import { ListsProvider } from "@/contexts/ListsContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
+import { RecentTasksProvider } from "@/contexts/RecentTasksContext";
+import { NotificationProvider } from "@/components/ui/notification";
 import Lists from "./pages/Lists";
 import PageTransition from "./components/PageTransition";
 
@@ -22,21 +24,25 @@ const App = () => (
       <MonitoringProvider>
         <ListsProvider>
           <SidebarProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <HashRouter>
-                <AppLayout>
-                  <Routes>
-                    <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-                    <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
-                    <Route path="/lists" element={<PageTransition><Lists /></PageTransition>} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-                  </Routes>
-                </AppLayout>
-              </HashRouter>
-            </TooltipProvider>
+            <RecentTasksProvider>
+              <NotificationProvider>
+                <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <HashRouter>
+                  <AppLayout>
+                    <Routes>
+                      <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+                      <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+                      <Route path="/lists" element={<PageTransition><Lists /></PageTransition>} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+                    </Routes>
+                  </AppLayout>
+                </HashRouter>
+                </TooltipProvider>
+              </NotificationProvider>
+            </RecentTasksProvider>
           </SidebarProvider>
         </ListsProvider>
       </MonitoringProvider>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, X, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, X, ArrowLeft, Search, Check, PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as SimpleIcons from 'react-icons/si';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { WHITELIST_OPTIONS, BLOCKLIST_OPTIONS, CATEGORY_COLORS, type AppOption } from '@/data/prepopulatedLists';
 
 const Lists = () => {
   const { theme } = useTheme();
@@ -27,33 +28,104 @@ const Lists = () => {
   const [whitelistItem, setWhitelistItem] = useState({ name: '', pattern: '' });
   const [blocklistItem, setBlocklistItem] = useState({ name: '', pattern: '' });
 
-  const handleAddToWhitelist = () => {
-    if (whitelistItem.name && whitelistItem.pattern) {
-      const icon = findIconForName(whitelistItem.name);
+  // Search and selection state
+  const [whitelistSearch, setWhitelistSearch] = useState('');
+  const [blocklistSearch, setBlocklistSearch] = useState('');
+  const [selectedWhitelistItems, setSelectedWhitelistItems] = useState<Set<string>>(new Set());
+  const [selectedBlocklistItems, setSelectedBlocklistItems] = useState<Set<string>>(new Set());
+
+  
+  // Handle adding multiple pre-populated items
+  const handleAddSelectedWhitelistItems = () => {
+    selectedWhitelistItems.forEach(itemId => {
+      const item = WHITELIST_OPTIONS.find(opt => opt.id === itemId);
+      if (item) {
+        addToWhitelist({
+          name: item.name,
+          pattern: item.pattern,
+          icon: item.icon,
+        });
+      }
+    });
+    setSelectedWhitelistItems(new Set());
+    setIsWhitelistDialogOpen(false);
+  };
+
+  const handleAddSelectedBlocklistItems = () => {
+    selectedBlocklistItems.forEach(itemId => {
+      const item = BLOCKLIST_OPTIONS.find(opt => opt.id === itemId);
+      if (item) {
+        addToBlocklist({
+          name: item.name,
+          pattern: item.pattern,
+          icon: item.icon,
+        });
+      }
+    });
+    setSelectedBlocklistItems(new Set());
+    setIsBlocklistDialogOpen(false);
+  };
+
+  // Handle single item selection
+  const handleWhitelistItemToggle = (itemId: string) => {
+    const newSelected = new Set(selectedWhitelistItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedWhitelistItems(newSelected);
+  };
+
+  const handleBlocklistItemToggle = (itemId: string) => {
+    const newSelected = new Set(selectedBlocklistItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedBlocklistItems(newSelected);
+  };
+
+  // Handle custom keyword addition
+  const handleAddCustomWhitelist = () => {
+    if (whitelistItem.name.trim()) {
+      const keyword = whitelistItem.name.trim();
+      const icon = findIconForName(keyword);
       addToWhitelist({
-        name: whitelistItem.name,
-        pattern: whitelistItem.pattern,
+        name: keyword,
+        pattern: keyword.toLowerCase(),
         icon: icon,
       });
-      // Reset form
       setWhitelistItem({ name: '', pattern: '' });
-      setIsWhitelistDialogOpen(false);
     }
   };
 
-  const handleAddToBlocklist = () => {
-    if (blocklistItem.name && blocklistItem.pattern) {
-      const icon = findIconForName(blocklistItem.name);
+  const handleAddCustomBlocklist = () => {
+    if (blocklistItem.name.trim()) {
+      const keyword = blocklistItem.name.trim();
+      const icon = findIconForName(keyword);
       addToBlocklist({
-        name: blocklistItem.name,
-        pattern: blocklistItem.pattern,
+        name: keyword,
+        pattern: keyword.toLowerCase(),
         icon: icon,
       });
-      // Reset form
       setBlocklistItem({ name: '', pattern: '' });
-      setIsBlocklistDialogOpen(false);
     }
   };
+
+  // Filter options based on search
+  const filteredWhitelistOptions = WHITELIST_OPTIONS.filter(item =>
+    item.name.toLowerCase().includes(whitelistSearch.toLowerCase()) ||
+    item.category.toLowerCase().includes(whitelistSearch.toLowerCase()) ||
+    item.description.toLowerCase().includes(whitelistSearch.toLowerCase())
+  );
+
+  const filteredBlocklistOptions = BLOCKLIST_OPTIONS.filter(item =>
+    item.name.toLowerCase().includes(blocklistSearch.toLowerCase()) ||
+    item.category.toLowerCase().includes(blocklistSearch.toLowerCase()) ||
+    item.description.toLowerCase().includes(blocklistSearch.toLowerCase())
+  );
 
   const getIcon = (iconName?: string) => {
     if (!iconName) return null;
@@ -136,6 +208,60 @@ const Lists = () => {
     return null; // No icon found
   };
 
+  // Component for app list items
+  const AppListItem = ({ item, isSelected, onToggle }: {
+    item: AppOption;
+    isSelected: boolean;
+    onToggle: () => void;
+  }) => {
+    const IconComponent = (SimpleIcons as any)[item.icon];
+
+    return (
+      <button
+        onClick={onToggle}
+        className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
+          isSelected
+            ? 'border-mint bg-mint/5'
+            : theme === 'dark'
+              ? 'border-border hover:border-mint/50 hover:bg-muted/30'
+              : 'border-gray-200 hover:border-mint/50 hover:bg-gray-50'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+            CATEGORY_COLORS[item.category] || 'text-gray-500 bg-gray-500/10'
+          }`}>
+            {IconComponent ? (
+              <IconComponent className="w-5 h-5" />
+            ) : (
+              <div className="w-5 h-5 bg-current rounded" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h4 className="font-medium text-foreground truncate">{item.name}</h4>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                CATEGORY_COLORS[item.category] || 'text-gray-500 bg-gray-500/10'
+              }`}>
+                {item.category}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground truncate">{item.description}</p>
+          </div>
+          <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+            isSelected
+              ? 'border-mint bg-mint text-white'
+              : theme === 'dark'
+                ? 'border-border bg-muted'
+                : 'border-gray-300 bg-white'
+          }`}>
+            {isSelected && <Check className="w-4 h-4" />}
+          </div>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Main Content Area */}
@@ -171,7 +297,17 @@ const Lists = () => {
                     Apps and websites that are always allowed (bypass AI checking)
                   </p>
                 </div>
-                <Dialog open={isWhitelistDialogOpen} onOpenChange={setIsWhitelistDialogOpen}>
+                <Dialog
+                  open={isWhitelistDialogOpen}
+                  onOpenChange={(open) => {
+                    setIsWhitelistDialogOpen(open);
+                    if (!open) {
+                      setWhitelistSearch('');
+                      setSelectedWhitelistItems(new Set());
+                      setWhitelistItem({ name: '', pattern: '' });
+                    }
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button
                       size="sm"
@@ -181,40 +317,80 @@ const Lists = () => {
                       Add to Whitelist
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
                     <DialogHeader>
                       <DialogTitle>Add to Whitelist</DialogTitle>
                       <DialogDescription>
-                        Add an app or website that should always be allowed
+                        Select apps and websites that should always be allowed
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Name</label>
+
+                    {/* Search Bar */}
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search apps or categories..."
+                        value={whitelistSearch}
+                        onChange={(e) => setWhitelistSearch(e.target.value)}
+                        className="pl-10 rounded-xl"
+                      />
+                    </div>
+
+                    {/* App List */}
+                    <div className="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0">
+                      {filteredWhitelistOptions.map((item) => (
+                        <AppListItem
+                          key={item.id}
+                          item={item}
+                          isSelected={selectedWhitelistItems.has(item.id)}
+                          onToggle={() => handleWhitelistItemToggle(item.id)}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Custom Input */}
+                    <div className="border-t pt-4">
+                      <div className="flex gap-2">
                         <Input
-                          placeholder="e.g., Notion"
+                          placeholder="Add custom app or keyword..."
                           value={whitelistItem.name}
                           onChange={(e) => setWhitelistItem({ ...whitelistItem, name: e.target.value })}
-                          className="rounded-xl"
+                          className="rounded-xl flex-1"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              handleAddCustomWhitelist();
+                            }
+                          }}
                         />
+                        <Button
+                          onClick={handleAddCustomWhitelist}
+                          disabled={!whitelistItem.name.trim()}
+                          className="rounded-xl bg-mint hover:bg-mint/90"
+                        >
+                          <PlusCircle className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Pattern</label>
-                        <Input
-                          placeholder="e.g., notion (matches window title, app name, or URL)"
-                          value={whitelistItem.pattern}
-                          onChange={(e) => setWhitelistItem({ ...whitelistItem, pattern: e.target.value })}
-                          className="rounded-xl"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Use | to separate multiple patterns (e.g., "notion|notes")
-                        </p>
-                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 mt-4 pt-4 border-t">
                       <Button
-                        onClick={handleAddToWhitelist}
-                        className="w-full rounded-xl bg-mint hover:bg-mint/90"
+                        onClick={handleAddSelectedWhitelistItems}
+                        disabled={selectedWhitelistItems.size === 0}
+                        className="flex-1 rounded-xl bg-mint hover:bg-mint/90"
                       >
-                        Add to Whitelist
+                        Add {selectedWhitelistItems.size} Selected
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsWhitelistDialogOpen(false);
+                          setSelectedWhitelistItems(new Set());
+                          setWhitelistItem({ name: '', pattern: '' });
+                        }}
+                        className="rounded-xl"
+                      >
+                        Cancel
                       </Button>
                     </div>
                   </DialogContent>
@@ -272,7 +448,17 @@ const Lists = () => {
                     Apps and websites that are always blocked (never allowed)
                   </p>
                 </div>
-                <Dialog open={isBlocklistDialogOpen} onOpenChange={setIsBlocklistDialogOpen}>
+                <Dialog
+                  open={isBlocklistDialogOpen}
+                  onOpenChange={(open) => {
+                    setIsBlocklistDialogOpen(open);
+                    if (!open) {
+                      setBlocklistSearch('');
+                      setSelectedBlocklistItems(new Set());
+                      setBlocklistItem({ name: '', pattern: '' });
+                    }
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button
                       size="sm"
@@ -283,40 +469,80 @@ const Lists = () => {
                       Add to Blocklist
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
                     <DialogHeader>
                       <DialogTitle>Add to Blocklist</DialogTitle>
                       <DialogDescription>
-                        Add an app or website that should always be blocked
+                        Select apps and websites that should always be blocked
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Name</label>
+
+                    {/* Search Bar */}
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search apps or categories..."
+                        value={blocklistSearch}
+                        onChange={(e) => setBlocklistSearch(e.target.value)}
+                        className="pl-10 rounded-xl"
+                      />
+                    </div>
+
+                    {/* App List */}
+                    <div className="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0">
+                      {filteredBlocklistOptions.map((item) => (
+                        <AppListItem
+                          key={item.id}
+                          item={item}
+                          isSelected={selectedBlocklistItems.has(item.id)}
+                          onToggle={() => handleBlocklistItemToggle(item.id)}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Custom Input */}
+                    <div className="border-t pt-4">
+                      <div className="flex gap-2">
                         <Input
-                          placeholder="e.g., Instagram"
+                          placeholder="Add custom app or keyword..."
                           value={blocklistItem.name}
                           onChange={(e) => setBlocklistItem({ ...blocklistItem, name: e.target.value })}
-                          className="rounded-xl"
+                          className="rounded-xl flex-1"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              handleAddCustomBlocklist();
+                            }
+                          }}
                         />
+                        <Button
+                          onClick={handleAddCustomBlocklist}
+                          disabled={!blocklistItem.name.trim()}
+                          className="rounded-xl bg-red-500 hover:bg-red-600 text-white"
+                        >
+                          <PlusCircle className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Pattern</label>
-                        <Input
-                          placeholder="e.g., instagram (matches window title, app name, or URL)"
-                          value={blocklistItem.pattern}
-                          onChange={(e) => setBlocklistItem({ ...blocklistItem, pattern: e.target.value })}
-                          className="rounded-xl"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Use | to separate multiple patterns (e.g., "instagram|insta")
-                        </p>
-                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 mt-4 pt-4 border-t">
                       <Button
-                        onClick={handleAddToBlocklist}
-                        className="w-full rounded-xl bg-red-500 hover:bg-red-600 text-white"
+                        onClick={handleAddSelectedBlocklistItems}
+                        disabled={selectedBlocklistItems.size === 0}
+                        className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 text-white"
                       >
-                        Add to Blocklist
+                        Block {selectedBlocklistItems.size} Selected
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsBlocklistDialogOpen(false);
+                          setSelectedBlocklistItems(new Set());
+                          setBlocklistItem({ name: '', pattern: '' });
+                        }}
+                        className="rounded-xl"
+                      >
+                        Cancel
                       </Button>
                     </div>
                   </DialogContent>

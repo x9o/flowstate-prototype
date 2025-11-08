@@ -4,9 +4,10 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useMonitoring } from '@/contexts/MonitoringContext';
 import { useLists } from '@/contexts/ListsContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useRecentTasks } from '@/contexts/RecentTasksContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 import { UserDropdown } from "@/components/Dropdown";
 import { MonitoringStatus } from "@/components/MonitoringStatus";
 import { Sidebar } from "@/components/Sidebar";
@@ -14,6 +15,10 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TaskValidationDialog } from "@/components/TaskValidationDialog";
 import { taskValidationService } from "@/services/TaskValidationService";
 import { quotes } from '@/data/quotes';
+import { StrictnessSelector, StrictnessTrigger } from "@/components/StrictnessSelector";
+import { RecentTasksModal } from "@/components/RecentTasksModal";
+import { SessionStatsModal } from "@/components/SessionStatsModal";
+import { TextShimmer } from "@/components/ui/text-shimmer";
 
 // Dashboard Components
 import { ActiveSessionHeader, LargeTimerDisplay, SessionActionButton, GoalProgressTracker, RecentlyBlockedList, StayFocusedSection } from "@/components/dashboard";
@@ -91,7 +96,15 @@ const placeholderTemplates = [
   "Fix critical bug in production",
   "Plan content calendar for next month",
   "Learn new framework tutorial",
-  "Organize digital files and documents"
+  "Organize digital files and documents",
+  "Design new website layout",
+  "Review codebase for bug fixes",
+  "Prepare slides for upcoming presentation",
+  "Conduct user testing for new features",
+  "Analyze data for monthly report",
+  "Optimize server performance",
+  "Implement new feature for mobile app",
+  "Review pull requests from team",
 ];
 
 const Index = () => {
@@ -101,8 +114,9 @@ const Index = () => {
   const { toggleSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
   const [currentGoal, setCurrentGoal] = useState("");
-  const { startMonitoring, stopMonitoring, pauseMonitoring, resumeMonitoring, monitoringState, isPaused, recentBlockedApps } = useMonitoring();
+  const { startMonitoring, stopMonitoring, pauseMonitoring, resumeMonitoring, monitoringState, isPaused, recentBlockedApps, strictnessLevel, setStrictnessLevel } = useMonitoring();
   const { whitelist, blocklist } = useLists();
+  const { addRecentTask } = useRecentTasks();
   const [isMonitoring, setIsMonitoring] = useState(false);
 
   // Debug: Log lists on every render to see what data we have
@@ -119,6 +133,10 @@ const Index = () => {
   const [originalTask, setOriginalTask] = useState("");
   const [validationType, setValidationType] = useState<'client' | 'ai'>('ai');
 
+  // Session stats modal state
+  const [showSessionStats, setShowSessionStats] = useState(false);
+  const [sessionStatsData, setSessionStatsData] = useState(null);
+
   // State for dynamic content
   const [greeting, setGreeting] = useState("");
   const [greetingIcon, setGreetingIcon] = useState<'sun' | 'moon'>('sun');
@@ -127,6 +145,8 @@ const Index = () => {
   const [currentTip, setCurrentTip] = useState(tips[0]);
   const [quoteIndex, setQuoteIndex] = useState(Math.floor(Math.random() * quotes.length));
   const [tipIndex, setTipIndex] = useState(0);
+  const [isStrictnessSelectorOpen, setIsStrictnessSelectorOpen] = useState(false);
+  const [isRecentTasksModalOpen, setIsRecentTasksModalOpen] = useState(false);
 
   // Typing animation state
   const [placeholderText, setPlaceholderText] = useState("");
@@ -288,6 +308,14 @@ const Index = () => {
 
     setTasks([newTask, ...tasks]);
 
+    // Add task to recent tasks
+    addRecentTask({
+      title: task,
+      color: randomColor,
+      category: 'General',
+      tags: []
+    });
+
     // Start monitoring with this goal
     startMonitoringForTask(task);
   };
@@ -349,6 +377,42 @@ const Index = () => {
     } catch (error) {
       console.error('Failed to toggle pause state:', error);
     }
+  };
+
+  const handleFinishSession = async () => {
+    try {
+      // Prepare session stats data
+      const sessionTime = monitoringState.sessionStats.sessionStartTime
+        ? Math.round((Date.now() - monitoringState.sessionStats.sessionStartTime) / 1000)
+        : 0;
+
+      const statsData = {
+        duration: sessionTime,
+        blockedAttempts: monitoringState.sessionStats.blockedAttempts,
+        totalChecks: monitoringState.sessionStats.totalChecks,
+        goals: monitoringState.currentGoals,
+        blockedApps: recentBlockedApps.map(app => ({
+          appName: app.appName,
+          windowTitle: app.windowTitle,
+          count: 1 // For now, each blocked app appears once
+        })),
+        productiveApps: [] // This would need to be tracked in the monitoring context
+      };
+
+      setSessionStatsData(statsData);
+      setShowSessionStats(true);
+
+      await stopMonitoring();
+      setIsMonitoring(false);
+      setCurrentGoal("");
+    } catch (error) {
+      console.error('Failed to finish session:', error);
+    }
+  };
+
+  const handleCloseSessionStats = () => {
+    setShowSessionStats(false);
+    setSessionStatsData(null);
   };
 
   const handleTaskComplete = async () => {
@@ -436,6 +500,20 @@ const Index = () => {
     }
   };
 
+  const handleRecentTaskSelect = async (recentTask) => {
+    console.log('📋 Recent task selected:', recentTask);
+
+    // Set the current goal to the selected recent task
+    setCurrentGoal(recentTask.title);
+
+    // Auto-start monitoring with the recent task
+    try {
+      await handleQuickStartTask(recentTask.title);
+    } catch (error) {
+      console.error('❌ ERROR starting recent task monitoring:', error);
+    }
+  };
+
   const handleAccountClick = () => {
     console.log("Account clicked");
     // TODO: Implement account functionality
@@ -480,7 +558,7 @@ const Index = () => {
         </div>
 
         {/* Main Content - Dynamic based on monitoring state */}
-        <main className="flex-1 flex items-center justify-center p-8">
+        <main className="flex-1 flex items-center justify-center p-8 pb-12">
           <div className="w-full max-w-3xl">
             <div className="text-center space-y-8">
               {isMonitoring ? (
@@ -504,19 +582,17 @@ const Index = () => {
                     </div>
                   </div>
 
-                  {/* Stop Button */}
-                  <div className="flex justify-center">
-                    <button
-                      onClick={handleStopMonitoring}
-                      className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-lg font-semibold transition-all hover:scale-105 ${
-                        theme === 'dark'
-                          ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg'
-                          : 'bg-red-500 hover:bg-red-600 text-white shadow-lg'
-                      }`}
-                    >
-                      <Square className="w-6 h-6" />
-                      Stop Session
-                    </button>
+                  {/* Session Control Buttons */}
+                  <div className="flex justify-center gap-4">
+                    <SessionActionButton
+                      type="pause"
+                      onClick={handlePauseResume}
+                      isPaused={isPaused}
+                    />
+                    <SessionActionButton
+                      type="finish"
+                      onClick={handleFinishSession}
+                    />
                   </div>
 
                   {/* Session Stats */}
@@ -580,7 +656,7 @@ const Index = () => {
                       ) : (
                         <Moon className="w-12 h-12 text-indigo-400" />
                       )}
-                      <h1 className="text-5xl font-bold transition-all duration-500 ease-in-out">
+                      <h1 className="text-5xl font-bold transition-all duration-500 ease-in-out bg-gradient-to-r from-foreground to-mint bg-clip-text text-transparent">
                         {greeting}
                       </h1>
                     </div>
@@ -592,37 +668,42 @@ const Index = () => {
 
                   {/* Input with icons inside */}
                   <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
                       <button
-                        className={`p-2 rounded-lg transition-colors ${
+                        onClick={() => console.log('Plus button clicked!')}
+                        className={`p-2 rounded-lg transition-colors pointer-events-auto z-10 ${
                           theme === 'dark'
                             ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
                             : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
                         }`}
+                        style={{ cursor: 'pointer !important' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.cursor = 'pointer';
+                          e.currentTarget.style.setProperty('cursor', 'pointer', 'important');
+                        }}
                       >
                         <Plus className="w-5 h-5" />
                       </button>
                       <button
-                        className={`p-2 rounded-lg transition-colors ${
+                        onClick={() => console.log('Shuffle button clicked!')}
+                        className={`p-2 rounded-lg transition-colors pointer-events-auto z-10 ${
                           theme === 'dark'
                             ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
                             : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
                         }`}
+                        style={{ cursor: 'pointer !important' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.cursor = 'pointer';
+                          e.currentTarget.style.setProperty('cursor', 'pointer', 'important');
+                        }}
                       >
                         <Shuffle className="w-5 h-5" />
                       </button>
-                      <button
-                        className={`p-2 rounded-lg transition-colors ${
-                          theme === 'dark'
-                            ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                            : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
-                        }`}
-                      >
-                        <History className="w-5 h-5" />
-                      </button>
+                      <StrictnessTrigger onClick={() => setIsStrictnessSelectorOpen(true)} />
                     </div>
 
-                    <Input
+                    <input
+                      type="text"
                       value={currentGoal}
                       onChange={(e) => setCurrentGoal(e.target.value)}
                       onKeyDown={(e) => {
@@ -631,7 +712,7 @@ const Index = () => {
                         }
                       }}
                       placeholder={placeholderText || "What are you working on?"}
-                      className={`w-full h-16 pl-40 pr-20 text-lg rounded-2xl border-2 transition-all ${
+                      className={`w-full h-16 pl-40 pr-20 text-lg rounded-2xl border-2 transition-all relative z-0 ${
                         theme === 'dark'
                           ? 'bg-muted/50 border-border focus:border-mint backdrop-blur-sm'
                           : 'bg-white/80 border-gray-300 focus:border-mint backdrop-blur-sm'
@@ -662,7 +743,7 @@ const Index = () => {
                   {/* Placeholder Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
                     <button
-                      onClick={() => console.log('Recent clicked')}
+                      onClick={() => setIsRecentTasksModalOpen(true)}
                       className={`px-4 py-3 rounded-xl border-2 transition-all hover:scale-105 ${
                         theme === 'dark'
                           ? 'bg-card border-border hover:border-mint'
@@ -735,6 +816,30 @@ const Index = () => {
         onRetry={handleTaskRetry}
         onCancel={handleValidationCancel}
       />
+
+      {/* Strictness Selector Dialog */}
+      <StrictnessSelector
+        currentLevel={strictnessLevel}
+        onLevelChange={setStrictnessLevel}
+        isOpen={isStrictnessSelectorOpen}
+        onOpenChange={setIsStrictnessSelectorOpen}
+      />
+
+      {/* Recent Tasks Modal */}
+      <RecentTasksModal
+        isOpen={isRecentTasksModalOpen}
+        onClose={() => setIsRecentTasksModalOpen(false)}
+        onTaskSelect={handleRecentTaskSelect}
+      />
+
+      {/* Session Stats Modal */}
+      {sessionStatsData && (
+        <SessionStatsModal
+          isOpen={showSessionStats}
+          onClose={handleCloseSessionStats}
+          sessionData={sessionStatsData}
+        />
+      )}
     </div>
   );
 };

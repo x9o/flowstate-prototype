@@ -8,10 +8,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('dismiss-overlay');
   },
 
-  // Send whitelist signal to main process
+  // Send whitelist signal to main process (for apps/general use)
   markAsProductive: () => {
     console.log('Preload: markAsProductive called');
-    ipcRenderer.send('mark-as-productive');
+    ipcRenderer.send('mark-as-productive', { type: 'general' });
+  },
+
+  // Send page-specific whitelist signal to main process
+  markPageAsProductive: () => {
+    console.log('Preload: markPageAsProductive called');
+    ipcRenderer.send('mark-as-productive', { type: 'page' });
+  },
+
+  // Send domain-specific whitelist signal to main process
+  markDomainAsProductive: () => {
+    console.log('Preload: markDomainAsProductive called');
+    ipcRenderer.send('mark-as-productive', { type: 'domain' });
   },
 
   // Receive blocking data from main process

@@ -3,7 +3,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Pause, Play, CheckCircle, Square } from 'lucide-react';
 
 interface SessionActionButtonProps {
-  type: 'pause' | 'complete' | 'end';
+  type: 'pause' | 'complete' | 'end' | 'finish';
   onClick: () => void;
   isPaused?: boolean;
 }
@@ -25,6 +25,12 @@ export const SessionActionButton = ({ type, onClick, isPaused = false }: Session
         return {
           icon: <CheckCircle className="w-5 h-5" />,
           label: 'Task Complete',
+          className: 'bg-green-500 hover:bg-green-600 text-white'
+        };
+      case 'finish':
+        return {
+          icon: <CheckCircle className="w-5 h-5" />,
+          label: 'FINISH',
           className: 'bg-green-500 hover:bg-green-600 text-white'
         };
       case 'end':
