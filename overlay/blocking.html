@@ -481,18 +481,18 @@
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          <span id="focusTime">-- min</span>
+          <span id="blockedTime">-- sec</span>
         </div>
-        <div class="stat-label">focused</div>
+        <div class="stat-label">blocked</div>
       </div>
       <div class="stat-box">
         <div class="stat-value">
           <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
-          <span id="blocksCount">-- blocks</span>
+          <span id="blockedApps">-- apps</span>
         </div>
-        <div class="stat-label">stopped</div>
+        <div class="stat-label">blocked</div>
       </div>
     </div>
 
@@ -587,6 +587,23 @@
       return array[Math.floor(Math.random() * array.length)];
     }
 
+    // Function to format time based on duration
+    function formatTime(milliseconds) {
+      if (!milliseconds || milliseconds === 0) return '0 sec';
+
+      const seconds = Math.floor(milliseconds / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+
+      if (hours > 0) {
+        return `${hours} hour${hours !== 1 ? 's' : ''}`;
+      } else if (minutes > 0) {
+        return `${minutes} min${minutes !== 1 ? 's' : ''}`;
+      } else {
+        return `${seconds} sec${seconds !== 1 ? 's' : ''}`;
+      }
+    }
+
     // Listen for blocking data from main process
     if (window.electronAPI) {
       electronAPIAvailable = true;
@@ -636,6 +653,11 @@
       currentDomain = data.domain;
       currentUrl = data.url;
       currentApp = data.app;
+
+      // Store session stats data if available
+      if (data.stats) {
+        sessionData.stats = data.stats;
+      }
 
       console.log('Overlay received data:', data);
       console.log('currentDomain:', currentDomain);
@@ -699,12 +721,29 @@
     }
 
     function updateStats() {
-      // Calculate focus time in minutes
-      const focusMinutes = Math.floor((Date.now() - sessionData.startTime) / 60000);
-      document.getElementById('focusTime').textContent = `${focusMinutes} min`;
+      // Update blocked time from session stats
+      const blockedTimeElement = document.getElementById('blockedTime');
+      const blockedAppsElement = document.getElementById('blockedApps');
 
-      // Update blocks count
-      document.getElementById('blocksCount').textContent = `${sessionData.blockedAttempts} blocks`;
+      if (sessionData.stats) {
+        // Use stats from session data if available
+        if (sessionData.stats.totalBlockedTime !== undefined) {
+          blockedTimeElement.textContent = formatTime(sessionData.stats.totalBlockedTime);
+        } else {
+          blockedTimeElement.textContent = '0 sec';
+        }
+
+        if (sessionData.stats.blockedAppsCount !== undefined) {
+          const count = sessionData.stats.blockedAppsCount;
+          blockedAppsElement.textContent = `${count} app${count !== 1 ? 's' : ''}`;
+        } else {
+          blockedAppsElement.textContent = '0 apps';
+        }
+      } else {
+        // Fallback: use blocked attempts counter
+        blockedTimeElement.textContent = '0 sec';
+        blockedAppsElement.textContent = `${sessionData.blockedAttempts} app${sessionData.blockedAttempts !== 1 ? 's' : ''}`;
+      }
     }
 
     // Mark as productive function (for apps)

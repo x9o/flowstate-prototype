@@ -32,4 +32,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onMonitoringStatsUpdate: (callback) => ipcRenderer.on('monitoring-stats-update', callback),
 
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
+
+  // Desktop notifications
+  showNotification: (options) => ipcRenderer.invoke('show-notification', options),
+  requestNotificationPermission: () => ipcRenderer.invoke('request-notification-permission'),
 });

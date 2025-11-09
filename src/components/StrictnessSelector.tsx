@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Settings, Shield, AlertTriangle, CheckCircle, X, Lightbulb, Check, Ban, HelpCircle } from "lucide-react";
+import { Settings, Shield, AlertTriangle, CheckCircle, X, Check, Ban, HelpCircle, Check as CheckIcon } from "lucide-react";
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNotifications } from '@/components/ui/notification';
 
@@ -72,22 +72,36 @@ interface StrictnessSelectorProps {
 export function StrictnessSelector({ currentLevel, onLevelChange, isOpen, onOpenChange }: StrictnessSelectorProps) {
   const { theme } = useTheme();
   const { addNotification } = useNotifications();
+  const [previewLevel, setPreviewLevel] = useState<'lenient' | 'balanced' | 'strict'>(currentLevel);
+
+  // Reset preview when the modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setPreviewLevel(currentLevel);
+    }
+  }, [isOpen, currentLevel]);
 
   const handleLevelSelect = (level: 'lenient' | 'balanced' | 'strict') => {
-    onLevelChange(level);
-    onOpenChange(false);
+    setPreviewLevel(level);
+  };
 
-    // Show notification for the change
-    const selectedLevel = strictnessLevels.find(l => l.id === level);
-    if (selectedLevel) {
-      addNotification({
-        type: 'success',
-        title: `AI Strictness Changed`,
-        message: `Switched to ${selectedLevel.name} mode - ${selectedLevel.description.toLowerCase()}`,
-        duration: 4000,
-        icon: <Check className="w-5 h-5" />
-      });
+  const handleConfirm = () => {
+    if (previewLevel !== currentLevel) {
+      onLevelChange(previewLevel);
+
+      // Show notification for the change
+      const selectedLevel = strictnessLevels.find(l => l.id === previewLevel);
+      if (selectedLevel) {
+        addNotification({
+          type: 'success',
+          title: `AI Strictness Changed`,
+          message: `Switched to ${selectedLevel.name} mode - ${selectedLevel.description.toLowerCase()}`,
+          duration: 4000,
+          icon: <Check className="w-5 h-5" />
+        });
+      }
     }
+    onOpenChange(false);
   };
 
   if (!isOpen) return null;
@@ -103,18 +117,8 @@ export function StrictnessSelector({ currentLevel, onLevelChange, isOpen, onOpen
         }`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-start gap-3">
-            <div className={`w-10 h-10 rounded-full bg-mint/10 flex items-center justify-center flex-shrink-0`}>
-              <Settings className="w-5 h-5 text-mint" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-1">AI Strictness Level</h3>
-              <p className="text-sm text-muted-foreground">
-                Choose how strictly the AI should monitor your activity
-              </p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold">AI Strictness Level</h3>
           <button
             onClick={() => onOpenChange(false)}
             className={`p-1 rounded-lg transition-colors ${
@@ -127,77 +131,91 @@ export function StrictnessSelector({ currentLevel, onLevelChange, isOpen, onOpen
           </button>
         </div>
 
-        {/* Strictness Levels */}
-        <div className="space-y-3 mb-6">
-          {strictnessLevels.map((level) => (
-            <button
-              key={level.id}
-              onClick={() => handleLevelSelect(level.id)}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                currentLevel === level.id
-                  ? 'border-mint bg-mint/5'
-                  : theme === 'dark'
-                    ? 'border-border hover:border-mint/50 hover:bg-muted/30'
-                    : 'border-gray-200 hover:border-mint/50 hover:bg-gray-50'
-              }`}
-            >
-              {/* Level Header */}
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`w-10 h-10 rounded-lg ${level.iconBg} flex items-center justify-center flex-shrink-0`}>
-                  <div className={level.color}>
-                    {level.icon}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold">{level.name}</span>
-                    {currentLevel === level.id && (
-                      <Badge className="text-xs bg-mint text-white">
-                        Current
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {level.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Examples */}
-              <div className={`p-3 rounded-lg text-xs space-y-2 ${
-                theme === 'dark' ? 'bg-muted/30' : 'bg-gray-50'
-              }`}>
-                {level.examples.map((example, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    {example.type === 'allow' && (
-                      <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                    )}
-                    {example.type === 'block' && (
-                      <Ban className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-                    )}
-                    {example.type === 'question' && (
-                      <HelpCircle className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
-                    )}
-                    <span className="text-muted-foreground">{example.text}</span>
-                  </div>
-                ))}
-              </div>
-            </button>
-          ))}
+        {/* Horizontal Strictness Selector */}
+        <div className="mb-6">
+          <div className={`flex rounded-lg p-1 ${
+            theme === 'dark' ? 'bg-muted' : 'bg-gray-100'
+          }`}>
+            {strictnessLevels.map((level) => (
+              <button
+                key={level.id}
+                onClick={() => handleLevelSelect(level.id)}
+                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                  previewLevel === level.id
+                    ? 'bg-mint text-white shadow-sm'
+                    : theme === 'dark'
+                      ? 'text-muted-foreground hover:text-foreground'
+                      : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {level.name}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Info Footer */}
-        <div className={`rounded-xl p-4 ${
-          theme === 'dark'
-            ? 'bg-muted/30 border border-border'
-            : 'bg-blue-50 border border-blue-200'
-        }`}>
-          <div className="flex items-start gap-2">
-            <Lightbulb className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground">
-              This setting affects how the AI determines if an activity is productive during your focus session. You can change this anytime before starting a session.
-            </p>
-          </div>
+        {/* Selected Level Description */}
+        <div className="mb-6">
+          {(() => {
+            const selectedLevel = strictnessLevels.find(l => l.id === previewLevel);
+            return selectedLevel ? (
+              <div className={`p-4 rounded-lg ${
+                theme === 'dark' ? 'bg-muted/30' : 'bg-gray-50'
+              }`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-lg ${selectedLevel.iconBg} flex items-center justify-center`}>
+                    <div className={selectedLevel.color}>
+                      {selectedLevel.icon}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">{selectedLevel.name}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedLevel.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Examples */}
+                <div className={`p-3 rounded-lg text-xs space-y-2 ${
+                  theme === 'dark' ? 'bg-muted/50' : 'bg-white'
+                }`}>
+                  {selectedLevel.examples.map((example, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      {example.type === 'allow' && (
+                        <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                      )}
+                      {example.type === 'block' && (
+                        <Ban className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                      )}
+                      {example.type === 'question' && (
+                        <HelpCircle className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                      )}
+                      <span className="text-muted-foreground">{example.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null;
+          })()}
+        </div>
+
+        {/* Confirm Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleConfirm}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              previewLevel !== currentLevel
+                ? 'bg-mint text-white hover:bg-mint/90 shadow-sm'
+                : theme === 'dark'
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+            disabled={previewLevel === currentLevel}
+          >
+            <CheckIcon className="w-4 h-4" />
+            Confirm
+          </button>
         </div>
       </motion.div>
     </div>

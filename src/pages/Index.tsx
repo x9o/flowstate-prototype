@@ -15,11 +15,13 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TaskValidationDialog } from "@/components/TaskValidationDialog";
 import { taskValidationService } from "@/services/TaskValidationService";
 import { quotes } from '@/data/quotes';
+import { NotificationSelector, NotificationTrigger } from "@/components/NotificationSelector";
 import { StrictnessSelector, StrictnessTrigger } from "@/components/StrictnessSelector";
 import { RecentTasksModal } from "@/components/RecentTasksModal";
 import { SessionStatsModal } from "@/components/SessionStatsModal";
 import { TextShimmer } from "@/components/ui/text-shimmer";
 import { SuggestedTasks } from "@/components/SuggestedTasks";
+import { notificationManager } from "@/services/NotificationManager";
 
 // Dashboard Components
 import { ActiveSessionHeader, LargeTimerDisplay, SessionActionButton, GoalProgressTracker, RecentlyBlockedList, StayFocusedSection } from "@/components/dashboard";
@@ -224,6 +226,8 @@ const Index = () => {
   const [tipIndex, setTipIndex] = useState(0);
   const [isStrictnessSelectorOpen, setIsStrictnessSelectorOpen] = useState(false);
   const [isRecentTasksModalOpen, setIsRecentTasksModalOpen] = useState(false);
+  const [isNotificationSelectorOpen, setIsNotificationSelectorOpen] = useState(false);
+  const [notificationInterval, setNotificationInterval] = useState<'off' | '10min' | '20min' | '30min' | '1hr'>('off');
 
   // Typing animation state
   const [placeholderText, setPlaceholderText] = useState("");
@@ -538,6 +542,22 @@ const Index = () => {
     };
   }, [isMonitoring, monitoringState.sessionStats.sessionStartTime]);
 
+  // Manage desktop notifications based on monitoring state and notification interval
+  useEffect(() => {
+    if (isMonitoring && monitoringState?.isActive && notificationInterval !== 'off') {
+      const intervalMinutes = parseInt(notificationInterval.replace('min', '').replace('hr', '60'));
+      notificationManager.startMonitoring(intervalMinutes, true); // sound enabled by default
+      notificationManager.updateGoal(currentGoal);
+    } else {
+      notificationManager.stopMonitoring();
+    }
+
+    // Cleanup on unmount or when monitoring stops
+    return () => {
+      notificationManager.stopMonitoring();
+    };
+  }, [isMonitoring, monitoringState?.isActive, notificationInterval, currentGoal]);
+
   const handleQuickStartTask = async (taskTitle: string) => {
     console.log('🔍 Quick start task validation for:', taskTitle);
 
@@ -772,21 +792,10 @@ const Index = () => {
                       >
                         <Plus className="w-5 h-5" />
                       </button>
-                      <button
-                        onClick={() => console.log('Shuffle button clicked!')}
-                        className={`p-2 rounded-lg transition-colors pointer-events-auto z-10 ${
-                          theme === 'dark'
-                            ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                            : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
-                        }`}
-                        style={{ cursor: 'pointer !important' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.cursor = 'pointer';
-                          e.currentTarget.style.setProperty('cursor', 'pointer', 'important');
-                        }}
-                      >
-                        <Shuffle className="w-5 h-5" />
-                      </button>
+                      <NotificationTrigger
+                        onClick={() => setIsNotificationSelectorOpen(true)}
+                        isActive={notificationInterval !== 'off'}
+                      />
                       <StrictnessTrigger onClick={() => setIsStrictnessSelectorOpen(true)} />
                     </div>
 
@@ -916,6 +925,15 @@ const Index = () => {
         onLevelChange={setStrictnessLevel}
         isOpen={isStrictnessSelectorOpen}
         onOpenChange={setIsStrictnessSelectorOpen}
+      />
+
+      {/* Notification Selector Dialog */}
+      <NotificationSelector
+        currentInterval={notificationInterval}
+        onIntervalChange={setNotificationInterval}
+        isOpen={isNotificationSelectorOpen}
+        onOpenChange={setIsNotificationSelectorOpen}
+        currentGoal={currentGoal}
       />
 
       {/* Recent Tasks Modal */}

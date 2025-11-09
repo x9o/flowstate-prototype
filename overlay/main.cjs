@@ -89,6 +89,12 @@ function createBlockingWindow() {
       url: blockedUrl,
       blocksStopped: sessionStats.blocksStopped,
       sessionStartTime: sessionStats.sessionStartTime,
+      stats: {
+        totalBlockedTime: sessionStats.totalBlockedTime || 0,
+        blockedAppsCount: sessionStats.blockedAppsCount || 0,
+        blocksStopped: sessionStats.blocksStopped || 0,
+        sessionStartTime: sessionStats.sessionStartTime || Date.now()
+      },
       blockReason: process.env.BLOCK_REASON || 'ai' // Default to 'ai' if not specified
     });
   });

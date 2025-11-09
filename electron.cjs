@@ -247,6 +247,59 @@ ipcMain.handle('get-monitoring-status', () => {
   };
 });
 
+// Notification IPC handlers
+ipcMain.handle('request-notification-permission', async () => {
+  try {
+    const { Notification } = require('electron');
+
+    // In Electron, we don't need to request permission like in browsers
+    // Notifications work by default, but let's check if they're supported
+    if (Notification.isSupported()) {
+      return { success: true, granted: true };
+    } else {
+      return { success: false, error: 'Notifications not supported on this system' };
+    }
+  } catch (error) {
+    console.error('Failed to check notification support:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('show-notification', async (event, options) => {
+  try {
+    const { Notification } = require('electron');
+
+    if (!Notification.isSupported()) {
+      throw new Error('Notifications not supported on this system');
+    }
+
+    const notification = new Notification({
+      title: options.title,
+      body: options.body,
+      icon: options.icon || path.join(__dirname, 'public', 'flowstate_transparent_light_resized.png'),
+      silent: options.silent || false,
+      urgency: 'normal', // Can be 'normal', 'critical', or 'low'
+    });
+
+    // Show the notification
+    notification.show();
+
+    // Handle click events
+    notification.on('click', () => {
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.focus();
+        mainWindow.show();
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to show notification:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // Cleanup on app exit
 app.on('before-quit', () => {
   if (monitoringInstance) {

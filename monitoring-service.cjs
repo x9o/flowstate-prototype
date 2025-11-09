@@ -21,6 +21,9 @@ let sessionStats = {
   productiveChecks: 0,
   sessionStartTime: null,
   recentBlocks: [], // Array of {app, title, timestamp}
+  totalBlockedTime: 0, // Total time blocked in milliseconds
+  blockedAppsCount: 0, // Number of unique apps blocked
+  blockedAppsSet: new Set(), // Set to track unique blocked apps
 };
 
 // Stats update interval
@@ -152,6 +155,17 @@ function updateStats(windowInfo, isProductive) {
   if (!isProductive) {
     sessionStats.blockedAttempts++;
 
+    // Track unique blocked apps
+    if (!sessionStats.blockedAppsSet.has(appName)) {
+      sessionStats.blockedAppsSet.add(appName);
+      sessionStats.blockedAppsCount = sessionStats.blockedAppsSet.size;
+    }
+
+    // Increment blocked time - assume minimum 30 seconds per block
+    // This is a conservative estimate since the user was distracted long enough
+    // to trigger a block and will have to dismiss the overlay
+    sessionStats.totalBlockedTime += 30000; // 30 seconds in milliseconds
+
     // Add to recent blocks (keep last 10)
     sessionStats.recentBlocks.unshift({
       app: appName,
@@ -189,6 +203,8 @@ function serializeStats() {
     topProductiveApps,
     topBlockedApps,
     recentBlocks: sessionStats.recentBlocks,
+    totalBlockedTime: sessionStats.totalBlockedTime,
+    blockedAppsCount: sessionStats.blockedAppsCount,
   };
 }
 
@@ -379,7 +395,9 @@ async function showBlockingOverlay(goal, windowInfo, __dirname, blockReason = 'a
         BLOCK_REASON: blockReason,
         BLOCK_STATS_JSON: JSON.stringify({
           blocksStopped: sessionStats.blockedAttempts,
-          sessionStartTime: sessionStats.sessionStartTime
+          sessionStartTime: sessionStats.sessionStartTime,
+          totalBlockedTime: sessionStats.totalBlockedTime,
+          blockedAppsCount: sessionStats.blockedAppsCount
         })
       },
       windowsHide: false

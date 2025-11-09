@@ -8,6 +8,9 @@ FlowState is an **Electron-based productivity application** that uses **AI-power
 
 **Core Concept**: Users enter a goal/task → FlowState monitors active windows → AI determines if activity is productive → Blocks unproductive apps with a fullscreen overlay.
 
+##  REMEMBER
+ALWAYS RUN npm run build AFTER EDITS
+
 ## Essential Commands
 
 ### Development
