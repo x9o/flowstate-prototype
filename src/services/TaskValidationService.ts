@@ -1,7 +1,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini AI (same API key as monitoring service)
-const GEMINI_API_KEY = 'AIzaSyDt7br2YQDhiuXAJd-M2oWit7M_7sKTOgY';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  throw new Error('VITE_GEMINI_API_KEY environment variable is required');
+}
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const SYSTEM_PROMPT = `You are a balanced task validation assistant. Your job is to determine if a task/goal represents legitimate work, study, or productive activity.

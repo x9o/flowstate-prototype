@@ -2,7 +2,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { RecentTask } from '../types';
 
 // Configure Gemini - same API key as monitoring service
-const GEMINI_API_KEY = 'AIzaSyDt7br2YQDhiuXAJd-M2oWit7M_7sKTOgY';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  throw new Error('VITE_GEMINI_API_KEY environment variable is required');
+}
 const ai = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // Cache for suggested tasks

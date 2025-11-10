@@ -11,7 +11,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Configure Gemini
-const GEMINI_API_KEY = "AIzaSyDt7br2YQDhiuXAJd-M2oWit7M_7sKTOgY";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  throw new Error('VITE_GEMINI_API_KEY environment variable is required');
+}
 const ai = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // Enhanced cache for AI productivity verdicts with detailed window info

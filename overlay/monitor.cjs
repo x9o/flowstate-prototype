@@ -22,7 +22,7 @@ let unproductiveCache = new Map(); // Cache unproductive results: window -> true
 
 // Configuration
 const POLL_INTERVAL = 1000; // Check every 1 second
-const GEMINI_API_KEY = 'AIzaSyDt7br2YQDhiuXAJd-M2oWit7M_7sKTOgY';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
 // AI System Prompt
 const SYSTEM_PROMPT = `You are a strict and efficient productivity AI. Your only function is to determine if a user's activity is productive based on their stated goal. Your response must be a single word, either YES or NO, with no exceptions.

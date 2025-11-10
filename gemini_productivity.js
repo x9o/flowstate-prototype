@@ -6,13 +6,18 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { createRequire } from "module";
 import * as fs from "fs/promises";
+import "dotenv/config";
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Configure Gemini
-const GEMINI_API_KEY = "AIzaSyDt7br2YQDhiuXAJd-M2oWit7M_7sKTOgY";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  console.error('❌ GEMINI_API_KEY environment variable is required');
+  process.exit(1);
+}
 const ai = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // Cache for AI productivity verdicts to avoid repeated API calls

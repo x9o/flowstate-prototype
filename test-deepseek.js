@@ -1,11 +1,12 @@
 // DeepSeek API Test Script
 // Please install OpenAI SDK first: `npm install openai`
 
+import "dotenv/config";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
   baseURL: 'https://api.deepseek.com',
-  apiKey: 'sk-f3490e21987946e9a19fa9fa72bef987',
+  apiKey: process.env.DEEPSEEK_API_KEY || process.env.VITE_DEEPSEEK_API_KEY,
 });
 
 async function testBasicChat() {

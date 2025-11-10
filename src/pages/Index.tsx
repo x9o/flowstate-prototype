@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Play, Target, Lightbulb, ArrowRight, Square, Flame, Clock, Shield, FileText, TrendingUp, CheckCircle, Menu, ArrowUp, Shuffle, History, BarChart3, Settings as SettingsIcon, Sparkles, List, Sun, Moon } from "lucide-react";
+import { Search, Play, Target, Lightbulb, ArrowRight, Square, Flame, Clock, Shield, FileText, TrendingUp, CheckCircle, Menu, ArrowUp, Shuffle, History, BarChart3, Settings as SettingsIcon, Sparkles, List, Sun, Moon } from "lucide-react";
 import { useTheme } from '@/contexts/ThemeContext';
 import { useMonitoring } from '@/contexts/MonitoringContext';
 import { useLists } from '@/contexts/ListsContext';
@@ -17,6 +17,7 @@ import { taskValidationService } from "@/services/TaskValidationService";
 import { quotes } from '@/data/quotes';
 import { NotificationSelector, NotificationTrigger } from "@/components/NotificationSelector";
 import { StrictnessSelector, StrictnessTrigger } from "@/components/StrictnessSelector";
+import { TimeSelectorModal, TimeTrigger } from "@/components/TimeSelectorModal";
 import { RecentTasksModal } from "@/components/RecentTasksModal";
 import { SessionStatsModal } from "@/components/SessionStatsModal";
 import { TextShimmer } from "@/components/ui/text-shimmer";
@@ -228,6 +229,8 @@ const Index = () => {
   const [isRecentTasksModalOpen, setIsRecentTasksModalOpen] = useState(false);
   const [isNotificationSelectorOpen, setIsNotificationSelectorOpen] = useState(false);
   const [notificationInterval, setNotificationInterval] = useState<'off' | '10min' | '20min' | '30min' | '1hr'>('off');
+  const [isTimeSelectorOpen, setIsTimeSelectorOpen] = useState(false);
+  const [sessionDuration, setSessionDuration] = useState<number>(0); // 0 = unlimited
 
   // Typing animation state
   const [placeholderText, setPlaceholderText] = useState("");
@@ -413,7 +416,7 @@ const Index = () => {
       console.log('📋 Whitelist items being passed:', whitelist.map(item => ({ name: item.name, pattern: item.pattern })));
       console.log('🚫 Blocklist items being passed:', blocklist.map(item => ({ name: item.name, pattern: item.pattern })));
 
-      await startMonitoring([task], 25, whitelist, blocklist);
+      await startMonitoring([task], sessionDuration || 25, whitelist, blocklist);
       setIsMonitoring(true);
       setCurrentGoal("");
     } catch (error) {
@@ -509,6 +512,52 @@ const Index = () => {
     return 0;
   };
 
+  // Calculate remaining time for timed sessions
+  const getRemainingTime = () => {
+    if (sessionDuration > 0 && monitoringState.sessionStats.sessionStartTime) {
+      const elapsed = Date.now() - monitoringState.sessionStats.sessionStartTime;
+      const totalDuration = sessionDuration * 60 * 1000; // Convert minutes to milliseconds
+      const remaining = totalDuration - elapsed;
+      return Math.max(0, remaining);
+    }
+    return null;
+  };
+
+  // Check if session should end (time's up)
+  const shouldSessionEnd = () => {
+    if (sessionDuration > 0) {
+      const remaining = getRemainingTime();
+      return remaining !== null && remaining <= 0;
+    }
+    return false;
+  };
+
+  // Get timer color based on remaining time
+  const getTimerColor = () => {
+    if (sessionDuration === 0) return 'text-mint'; // Unlimited sessions
+
+    const remaining = getRemainingTime();
+    if (remaining === null) return 'text-mint';
+
+    const totalDuration = sessionDuration * 60 * 1000;
+    const percentageRemaining = remaining / totalDuration;
+
+    if (percentageRemaining <= 0) return 'text-red-500'; // Time's up
+    if (percentageRemaining <= 0.1) return 'text-red-500 animate-pulse'; // Last 10%
+    if (remaining <= 60000) return 'text-orange-500 animate-pulse'; // Last minute
+
+    return 'text-mint';
+  };
+
+  // Get timer label based on session type
+  const getTimerLabel = () => {
+    if (sessionDuration === 0) return 'Time Focused';
+    const remaining = getRemainingTime();
+    if (remaining === null) return 'Time Remaining';
+    if (remaining <= 0) return 'Session Ended';
+    return 'Time Remaining';
+  };
+
   // Format time for display
   const formatTime = (milliseconds: number) => {
     const totalSeconds = Math.floor(milliseconds / 1000);
@@ -531,7 +580,25 @@ const Index = () => {
 
     if (isMonitoring && monitoringState.sessionStats.sessionStartTime) {
       interval = setInterval(() => {
-        setSessionTime(Date.now() - monitoringState.sessionStats.sessionStartTime);
+        const elapsed = Date.now() - monitoringState.sessionStats.sessionStartTime;
+
+        if (sessionDuration > 0) {
+          // For timed sessions, show remaining time
+          const totalDuration = sessionDuration * 60 * 1000;
+          const remaining = Math.max(0, totalDuration - elapsed);
+          setSessionTime(remaining);
+
+          // Auto-end session when time runs out
+          if (remaining === 0) {
+            // Play end sound and show notification (future enhancement)
+            setTimeout(() => {
+              handleFinishSession();
+            }, 1000);
+          }
+        } else {
+          // For unlimited sessions, show elapsed time
+          setSessionTime(elapsed);
+        }
       }, 1000);
     } else {
       setSessionTime(0);
@@ -540,7 +607,7 @@ const Index = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isMonitoring, monitoringState.sessionStats.sessionStartTime]);
+  }, [isMonitoring, monitoringState.sessionStats.sessionStartTime, sessionDuration]);
 
   // Manage desktop notifications based on monitoring state and notification interval
   useEffect(() => {
@@ -675,8 +742,8 @@ const Index = () => {
                   {/* Session Timer Display */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-center gap-3">
-                      <Clock className="w-12 h-12 text-mint" />
-                      <h1 className="text-6xl font-bold text-mint font-mono">
+                      <Clock className={`w-12 h-12 ${getTimerColor()}`} />
+                      <h1 className={`text-6xl font-bold font-mono ${getTimerColor()}`}>
                         {formatTime(sessionTime)}
                       </h1>
                     </div>
@@ -685,8 +752,19 @@ const Index = () => {
                         {monitoringState.currentGoals[0] || "Focus Session"}
                       </h2>
                       <p className="text-lg text-muted-foreground">
-                        Stay focused! {isPaused ? '(Paused)' : 'Monitoring active'}
+                        {sessionDuration > 0
+                          ? (getRemainingTime() === 0
+                              ? 'Time\'s up! Session ending...'
+                              : `${isPaused ? '(Paused)' : 'Timed session active'}`
+                            )
+                          : `Stay focused! ${isPaused ? '(Paused)' : 'Monitoring active'}`
+                        }
                       </p>
+                      {sessionDuration > 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          Total duration: {sessionDuration} minutes
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -720,8 +798,8 @@ const Index = () => {
                     <div className={`p-4 rounded-xl ${
                       theme === 'dark' ? 'bg-card' : 'bg-gray-50'
                     }`}>
-                      <div className="text-2xl font-bold text-mint">{formatTime(sessionTime)}</div>
-                      <div className="text-sm text-muted-foreground">Duration</div>
+                      <div className={`text-2xl font-bold ${getTimerColor()}`}>{formatTime(sessionTime)}</div>
+                      <div className="text-sm text-muted-foreground">{getTimerLabel()}</div>
                     </div>
                   </div>
 
@@ -777,21 +855,9 @@ const Index = () => {
                   {/* Input with icons inside */}
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
-                      <button
-                        onClick={() => console.log('Plus button clicked!')}
-                        className={`p-2 rounded-lg transition-colors pointer-events-auto z-10 ${
-                          theme === 'dark'
-                            ? 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                            : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
-                        }`}
-                        style={{ cursor: 'pointer !important' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.cursor = 'pointer';
-                          e.currentTarget.style.setProperty('cursor', 'pointer', 'important');
-                        }}
-                      >
-                        <Plus className="w-5 h-5" />
-                      </button>
+                      <TimeTrigger
+                        onClick={() => setIsTimeSelectorOpen(true)}
+                      />
                       <NotificationTrigger
                         onClick={() => setIsNotificationSelectorOpen(true)}
                         isActive={notificationInterval !== 'off'}
@@ -934,6 +1000,13 @@ const Index = () => {
         isOpen={isNotificationSelectorOpen}
         onOpenChange={setIsNotificationSelectorOpen}
         currentGoal={currentGoal}
+      />
+
+      {/* Time Selector Dialog */}
+      <TimeSelectorModal
+        isOpen={isTimeSelectorOpen}
+        onOpenChange={setIsTimeSelectorOpen}
+        onTimeSelect={setSessionDuration}
       />
 
       {/* Recent Tasks Modal */}

@@ -5,7 +5,11 @@ const { join } = require("path");
 const fs = require("fs/promises");
 
 // Configure Gemini
-const GEMINI_API_KEY = "AIzaSyDt7br2YQDhiuXAJd-M2oWit7M_7sKTOgY";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  console.error('❌ GEMINI_API_KEY environment variable is required');
+  process.exit(1);
+}
 const ai = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // Enhanced cache for AI productivity verdicts
