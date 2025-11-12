@@ -1,0 +1,16 @@
+{
+  "name": "dns-block-test",
+  "version": "1.0.0",
+  "description": "Simple DNS blocking test script",
+  "main": "dns-blocker.js",
+  "scripts": {
+    "start": "node dns-blocker.js",
+    "test": "node test-dns.js"
+  },
+  "dependencies": {
+    "dns2": "^2.1.0"
+  },
+  "keywords": ["dns", "blocking", "test"],
+  "author": "FlowState",
+  "license": "MIT"
+}

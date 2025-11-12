@@ -1,10 +1,8 @@
+# FlowState — AI-Powered Focus & Productivity
 
-# FlowState — The blocker that actually understands what you're working on.
+FlowState is an **open-source desktop productivity app** built with **Electron + React**, designed to help users achieve deep focus through **AI-powered monitoring, task management, and intelligent distraction blocking**.
 
-FlowState is a **desktop productivity app** built with **Electron + React**, designed to help users achieve deep focus through **AI-powered monitoring, task management, and intelligent distraction blocking**.
-
-Unlike traditional blockers, FlowState understands user **intent** and dynamically manages their digital environment.  
-It’s built around the idea that focus should feel natural, not forced.
+Unlike traditional blockers, FlowState understands user **intent** and dynamically manages their digital environment. It's built around the idea that focus should feel natural, not forced.
 
 ---
 
@@ -12,8 +10,9 @@ It’s built around the idea that focus should feel natural, not forced.
 
 **Development Stage:** Advanced Prototype
 **Version:** v0.1 (MVP)
+**License:** Open Source (MIT)
 **Platform:** Electron (Cross-platform)
-**State:** ✅ Core UI complete (Home screen + Settings) / ✅ Full monitoring & AI blocking system implemented / ✅ Focus timer integration / ✅ Smart task validation  
+**State:** ✅ Core monitoring & AI blocking system implemented
 
 ---
 
@@ -21,14 +20,13 @@ It’s built around the idea that focus should feel natural, not forced.
 
 | Layer | Technology |
 |-------|-------------|
-| Frontend | React + TailwindCSS + Electron |
+| Frontend | React 18 + TypeScript + TailwindCSS + Electron |
 | Backend | Node.js (Electron main process) |
-| Database | Local JSON (lowdb) → Supabase (for cloud accounts in v0.3) |
-| Auth | Supabase Auth (planned) |
-| AI Logic | Gemini |
-| Deployment | Electron Builder |
-| Design | Figma / AI Prototyper |
-| Version Control | GitHub Private Repository |
+| AI Logic | Google Gemini API (2.5 Flash-Lite) |
+| UI Components | Radix UI + Lucide React + react-icons |
+| State Management | React Context (Theme, Monitoring, Lists) |
+| Build System | Vite + Electron Builder |
+| Development | ESLint + TypeScript + hot reload |
 
 ---
 
@@ -37,426 +35,259 @@ It’s built around the idea that focus should feel natural, not forced.
 FlowState helps users enter and maintain a **"flow state"** — a period of deep focus where distractions are intelligently managed.
 
 **Core Loop:**
-1. Add and enable tasks.
-2. Set focus duration.
-3. Start Focus Session (enables monitoring + overlay).
-4. FlowState blocks distractions until session ends.
+1. **Set your goal** - Define what you want to accomplish
+2. **Start focusing** - Activate monitoring + AI blocking
+3. **Stay on track** - AI intelligently blocks distractions
+4. **Achieve deep focus** - Get into your productive zone
 
 ---
 
-## 🧠 Features Overview
+## 🧠 Key Features
 
-### **Core Features**
-- [x] **Task Manager** — Add, enable/disable, and delete tasks with color coding
-- [ ] **Task-Based Sessions** — Flexible duration (work until done) + optional Pomodoro mode
-- [ ] **Session Timer** — Counts UP (elapsed time), not down. No fixed end time by default
-- [ ] **Pomodoro Mode Toggle** — Optional 25/5 work/break cycles with visual progress
-- [x] **Monitoring Engine** — Active window detection with AI-powered productivity analysis
+### ✅ **Currently Implemented**
 
-### **Task Input & Validation**
-- [ ] **Client-Side Validation (Free)** — Instant validation (vague phrases, gibberish, word count)
-- [ ] **AI Task Validation (Pro/Prototype)** — Gemini-powered clarity checker with suggestions
-- [ ] **Recent Tasks List** — Quick-restart previous goals (last 3-5 shown on home)
-- [ ] **Task History** — Auto-save all past tasks with timestamps
+**AI-Powered Monitoring**
+- Real-time active window detection
+- Gemini AI productivity analysis with caching
+- Context-aware blocking decisions
+- Multi-task support (considers all enabled tasks)
 
-### **Blocking System**
-- [x] **AI-Based Blocking** — Dynamic blocking using Gemini AI intent analysis
-- [x] **Productivity Caching** — Smart caching system for AI decisions
-- [ ] **Whitelist / Blacklist** — Manual app/site rule configuration
-- [ ] **Built-in Productivity DB** — Predefined safe apps (Notion, VSCode, Docs, Figma, Slack, etc.)
-- [ ] **Built-in Distraction DB** — Predefined blocked apps (Reddit, Twitter, Netflix, Roblox, etc.)
+**Smart Blocking System**
+- AI-based blocking with intent analysis
+- User-defined whitelist/blacklist with pattern matching
+- Productivity caching to reduce API calls
+- Three AI sensitivity levels (Strict, Balanced, Lenient)
 
-### **AI Intelligence**
-- [x] **AI Intent Matching** — Uses Gemini-based classifier to judge relevance of current activity
-- [x] **Context-Aware Blocking** — Understands user goals vs current activity
-- [x] **Multi-Task Support** — AI considers all enabled tasks when making decisions
-- [ ] **AI Modes** — "Strict", "Balanced", "Lenient" sensitivity levels
-- [ ] **Task Validation AI** — Gemini checks if goal is clear enough (Pro feature on launch)
+**User Interface**
+- Clean, responsive design with light/dark themes
+- Non-selectable text for distraction-free experience
+- Custom branding and professional UI components
+- Settings page with whitelist/blacklist management
 
-### **Blocking Overlay UI**
-- [ ] **Calm Design** — Soft gray (#F9FAFB) background with glassmorphism blur
-- [ ] **Context Display** — Shows current goal + why this was blocked
-- [ ] **Session Stats** — Time focused + distractions blocked (in overlay)
-- [ ] **Motivational Quotes** — Rotating quotes or breathing prompts (user toggle)
-- [ ] **Action Buttons:**
-  - [ ] "Back to Work" (primary, Enter key)
-  - [ ] "Mark Productive" (secondary, Cmd/Ctrl+P)
-  - [ ] "Dismiss for 5 min" (tertiary link, Cmd/Ctrl+D)
-  - [ ] "End Session" (tertiary link, Cmd/Ctrl+Q)
+**Session Management**
+- Goal-based focus sessions
+- Real-time monitoring with AI feedback
+- Blocking overlay with "Mark as Productive" functionality
+- Session statistics and recent blocks tracking
 
-### **Session Completion Screen**
-- [ ] **Victory Layout** — Animated checkmark with sparkles/confetti
-- [ ] **Hero Metric** — Large focus time display with progress bar
-- [ ] **Personal Best Comparison** — Shows % of personal best with color coding
-- [ ] **Secondary Stats** — Distractions blocked + streak counter (side-by-side cards)
-- [ ] **Daily Progress Bar** — Cumulative progress toward daily goal
-- [ ] **Motivational Quote** — Randomly selected from quote pool
-- [ ] **Action Buttons:**
-  - [ ] "Start Another Task" (primary)
-  - [ ] "Share" (secondary, generates shareable card)
-  - [ ] "Done" (tertiary)
-- [ ] **Variable Animations** — Different effects for milestones (new record, streak, etc.)
+### 🚧 **Planned Features**
 
-### **Home Screen Layout**
-- [ ] **Left Sidebar:**
-  - [ ] Quick Start section
-  - [ ] Navigation (Today's Tasks, Stats, Settings)
-  - [ ] Quick Access (Whitelist, Blocklist)
-- [ ] **Main Content:**
-  - [ ] Large goal input field with validation
-  - [ ] Pomodoro mode checkbox (optional)
-  - [ ] "Start Focusing" button (primary CTA)
-  - [ ] Recent tasks list (3-5 with play icons)
-  - [ ] Quick tips section
-- [ ] **Active Session View:**
-  - [ ] Current goal display
-  - [ ] Elapsed time (counting up)
-  - [ ] Session stats (time + blocks)
-  - [ ] Recent blocks list
-  - [ ] Pause/Task Complete buttons
+**Enhanced Blocking Methods**
+- DNS-level blocking (concept proven)
+- Browser extension integration
+- Process-based blocking for applications
+- Multi-layered blocking approach
 
-### **Stats & Progress Tracking**
-- [ ] **Streak System** — Days with at least 1 completed session
-  - [ ] Visual counter (🔥 X days)
-  - [ ] Current + longest streak display
-  - [ ] Celebratory messages at milestones (3, 7, 14, 30 days)
-  - [ ] No guilt-tripping or aggressive notifications
-- [ ] **Daily Stats:**
-  - [ ] Total focus time (cumulative across sessions)
-  - [ ] Distractions blocked count
-  - [ ] Sessions completed
-  - [ ] Progress toward daily goal
-- [ ] **Weekly/Monthly Stats:**
-  - [ ] Average daily focus time
-  - [ ] Total focus hours
-  - [ ] Best days
-  - [ ] Most blocked apps
+**Statistics & Analytics**
+- Detailed session analytics
+- Productivity trends and insights
+- Focus streak tracking
+- Export functionality
 
-### **Monetization (Time-Based)**
-- [ ] **Free Tier** — 2 hours of focus time per day
-- [ ] **Pro Tier** — Unlimited daily focus time ($5/mo)
-- [ ] **Time Tracking** — Cumulative daily minutes across all sessions
-- [ ] **Limit Warnings:**
-  - [ ] "15 min remaining" notification
-  - [ ] "Limit reached" celebration screen
-  - [ ] Upgrade prompts (non-aggressive)
-
-### **User Interface**
-- [x] **Responsive Design** — Mobile-first design that scales to desktop
-- [x] **Theme System** — Light/Dark mode with smooth transitions
-- [x] **Custom Components** — Task cards, focus timer, user dropdown, settings panel
-- [x] **Non-Selectable Text** — Clean UI with no text highlighting
-- [x] **Gradient Branding** — Dynamic sphere gradient that syncs with theme
-- [ ] **Color Scheme:** Primary #4C6FFF, Accent #10B981, Alert #EF4444
-
-### **User Preferences**
-- [x] **Settings Page** — Full settings interface with navigation
-- [ ] **Whitelist/Blacklist Editor** — Add/remove apps with icons and search
-- [ ] **Strictness Levels** — Relaxed/Balanced/Strict AI sensitivity
-- [ ] **Completion Style Toggle** — Minimal/Celebratory/Detailed completion screens
-- [ ] **Notification Preferences** — On/off for various alert types
-- [x] **User Dropdown** — Account and settings access with animations
-- [x] **Navigation System** — React Router with back navigation support
-
-### **Application Architecture**
-- [x] **Electron Integration** — Full desktop app with custom branding
-- [x] **Window Monitoring** — Real-time active window detection
-- [x] **Overlay System** — Fullscreen blocking overlay with dismissal options
-- [ ] **Flexible Timer System** — Task-based (no limit) + Pomodoro modes
-- [ ] **Local Data Storage** — JSON files for tasks, stats, preferences
-- [ ] **API Integration** — Gemini 2.5 Flash-Lite for classification
-
-### **Additional Features**
-- [x] **Smart Alerts** — Task validation popup with helpful user guidance
-- [x] **App Branding** — Custom icon and window title ("FlowState")
-- [ ] **Keyboard Shortcuts:**
-  - [ ] Enter: Back to Work (in overlay)
-  - [ ] Cmd/Ctrl+P: Mark Productive
-  - [ ] Cmd/Ctrl+D: Dismiss 5 min
-  - [ ] Cmd/Ctrl+Q: End Session
-  - [ ] Cmd/Ctrl+N: New Task
-- [ ] **Smart Notifications** — Session complete, streak maintained, limit warnings
-- [ ] **Session Pause** — 5-minute break mode (blocking disabled)
-
-
-## 🧱 App Layout Overview
-
-### 🏠 Home Page
-- Add and manage tasks.
-- Toggle tasks on/off.
-- Set timer duration.
-- Start/stop monitoring (activates overlay).
-
-### 📅 Schedule Page
-- Daily timeline for planned focus blocks.
-- Add new sessions with task, start/end times, repeat toggle.
-- Option to auto-start monitoring during session.
-
-### ⚙️ Preferences Page
-- Manage whitelist / blacklist.
-- Edit default focus duration.
-- Set AI mode (Strict / Balanced / Lenient).
-- Customize theme and notifications.
-- (Future) Account management + cloud sync options.
-
-### 🔻 Bottom Navigation Bar
-Persistent across all pages:
-> 🏠 Home | 📅 Schedule | ⚙️ Preferences
+**User Experience**
+- Keyboard shortcuts for common actions
+- Enhanced notifications system
+- Session completion celebrations
+- Cross-platform support improvements
 
 ---
 
-## 💰 Monetization Strategy
+## 🛠️ Installation
 
-FlowState follows a **Freemium SaaS model** with optional subscriptions for advanced features.
+### Prerequisites
+- Node.js 18+ installed
+- Git for cloning the repository
 
-| Tier | Price | Features |
-|------|--------|-----------|
-| **Free** | $0 | 3 sessions/day |
-| **Lite** | $3/mo | 10 sessions/day  |
-| **Pro** | $5/mo | 25 sessions/day  |
+### Setup Instructions
 
-
-### Future Add-ons
-- “Flow Sounds” (ambient focus audio pack)
-- “AI Schedule Advisor” (suggests ideal focus hours)
-
----
-
-## 🧩 AI Logic Overview
-
-### Classification Flow:
-1. Read window title from OS.
-2. Check against:
-   - Local whitelist (immediate allow)
-   - Local blacklist (immediate block)
-3. If unknown:
-   - Send to LLM with goal context.
-   - Return YES/NO (based on productivity).
-4. Adjust behavior based on AI mode sensitivity.
-
-**Example Prompt Behavior**
-```text
-GOAL: "Finish math essay"
-ACTIVITY: "YouTube - LoFi Study Beats"
-STRICT → NO
-BALANCED → YES
-LENIENT → YES
-````
-
-### AI Sensitivity Prompts
-
-Here are the design system prompts for the three AI sensitivity levels.
-
-#### Strict Sensitivity Prompt
-
-> You are an extremely strict productivity AI. Your only function is to determine if a user's activity is **directly and explicitly** productive for their stated goal. There is no room for interpretation.
-> Your response must ALWAYS be a single word: either YES or NO.
->
-> **Guidelines:**
-> 1.  **Direct Relevance Only:** Respond YES only if the activity is a primary tool or resource for the goal. Any activity that is not 100% related, even if helpful (like music or general browsing), is NO.
-> 2.  **No Ambiguity:** If the window title is ambiguous, generic, or unclear (e.g., "New Tab", "Untitled", "localhost:3000"), respond NO. The user must be specific.
-> 3.  **Block Distractions:** Social media, entertainment, news, and any non-work-related browsing are always NO.
->
-> **Example:**
-> *   **GOAL:** "Code a Python script."
-> *   **ACTIVITY:** "Stack Overflow" -> **YES**
-> *   **ACTIVITY:** "YouTube - 'Python Tutorial'" -> **YES**
-> *   **ACTIVITY:** "YouTube - 'Focus Music'" -> **NO**
-> *   **ACTIVITY:** "Spotify" -> **NO**
-
-#### Balanced Sensitivity Prompt
-
-> You are a balanced productivity AI. Your function is to determine if a user's activity is **reasonably productive** for their stated goal.
-> Your response must ALWAYS be a single word: either YES or NO.
->
-> **Guidelines:**
-> 1.  **Reasonable Support:** Respond YES if the activity directly supports the goal OR is a common secondary tool that aids focus (e.g., instrumental music, documentation).
-> 2.  **Assume Good Intent:** If the window title is ambiguous or technical (e.g., "npm start", "localhost:3000", "Untitled"), assume it is work-related and respond YES.
-> 3.  **Block Obvious Distractions:** Social media, entertainment sites, and clearly unrelated content are NO.
->
-> **Example:**
-> *   **GOAL:** "Write a research paper."
-> *   **ACTIVITY:** "JSTOR" -> **YES**
-> *   **ACTIVITY:** "YouTube - 'Ambient Study Music'" -> **YES**
-> *   **ACTIVITY:** "Reddit - r/askscience" -> **YES**
-> *   **ACTIVITY:** "Reddit - r/funny" -> **NO**
-
-#### Lenient Sensitivity Prompt
-
-> You are a lenient productivity AI. Your function is to block only **obvious and high-distraction activities**, allowing the user maximum flexibility.
-> Your response must ALWAYS be a single word: either YES or NO.
->
-> **Guidelines:**
-> 1.  **Allow Most Activities:** Respond YES for almost everything, including general browsing, music, and news. Your job is to prevent major distractions only.
-> 2.  **Block High-Distraction Content:** Respond NO only for activities that are almost never productive, such as social media feeds, video streaming sites (non-educational), and games.
-> 3.  **Trust the User:** If an activity could even remotely be considered productive or helpful for focus, respond YES.
->
-> **Example:**
-> *   **GOAL:** "Finish a design mockup."
-> *   **ACTIVITY:** "Figma" -> **YES**
-> *   **ACTIVITY:** "YouTube - 'Design Trends 2024'" -> **YES**
-> *   **ACTIVITY:** "Twitter / X" -> **NO**
-> *   **ACTIVITY:** "Netflix" -> **NO**
-> *   **ACTIVITY:** "Coolors.co" -> **YES**
-
----
-
-## 🧭 Feature Checklist (Milestone Plan)
-
-### ✅ **v0.1 – Prototype (Complete)**
-
-* [x] Task manager (add/remove/toggle with color coding)
-* [x] Timer UI & logic (circular progress, duration selection)
-* [x] Monitoring system (active window detection + AI analysis)
-* [x] Overlay activation (fullscreen blocking with dismissal)
-* [x] Basic Electron setup (custom branding, window configuration)
-* [x] Core design built (responsive, theme-aware, non-selectable text)
-* [x] Smart task validation (popup alerts for timer start requirements)
-* [x] Settings page (whitelist/blacklist configuration UI)
-* [x] User dropdown (account/settings navigation)
-* [x] Multi-task AI support (considers all enabled tasks in decisions)
-* [x] Productivity caching system (reduces AI API calls)
-* [x] Theme switching (light/dark mode with smooth transitions)
-
-### 🧩 **v0.2 – Preferences + Whitelist (In Progress)**
-
-* [x] Preferences page layout (fully functional settings page)
-* [x] User-defined whitelist/blacklist system (UI complete, backend integration needed)
-* [ ] Built-in DB of productive apps
-* [ ] Local saving of user preferences
-* [x] Integration with AI model (basic relevance check implemented)
-
-### 🕒 **v0.3 – Scheduling + Cloud Sync**
-
-* [ ] Schedule page (daily timeline)
-* [ ] Add/edit recurring focus blocks
-* [ ] Auto-start focus sessions
-* [ ] User account system (Supabase Auth)
-* [ ] Cloud sync for tasks & preferences
-
-### 📈 **v0.4 – Monetization & Analytics**
-
-* [ ] Tiered subscription system
-* [ ] Paywall integration (LemonSqueezy / Stripe)
-* [ ] Session logging
-* [ ] Analytics dashboard
-* [ ] Export session data (CSV)
-
-### 🧠 **v1.0 – Smart Focus AI**
-
-* [ ] AI pattern learning (adaptive blocking)
-* [ ] Contextual focus suggestions
-* [ ] AI daily summary reports
-* [ ] Cross-device sync
-* [ ] Desktop + mobile parity
-
----
-
-## 🧩 Folder Structure (Planned)
-
-```
-flowstate/
-├─ main.js              # Electron entry
-├─ preload.js           # Context bridge for secure FS
-├─ src/
-│  ├─ App.tsx
-│  ├─ pages/
-│  │   ├─ Home.tsx
-│  │   ├─ Schedule.tsx
-│  │   └─ Preferences.tsx
-│  ├─ components/
-│  │   ├─ TaskList.tsx
-│  │   ├─ TimerCard.tsx
-│  │   ├─ ScheduleBlock.tsx
-│  │   └─ SettingsCard.tsx
-│  ├─ hooks/
-│  │   └─ useMonitoring.ts
-│  ├─ utils/
-│  │   ├─ aiClassifier.ts
-│  │   ├─ storage.ts
-│  │   └─ timer.ts
-│  ├─ data/
-│  │   ├─ whitelist.json
-│  │   ├─ blacklist.json
-│  │   └─ tasks.json
-│  └─ styles/
-│      ├─ globals.css
-│      └─ theme.css
-└─ package.json
+1. **Clone the repository**
+```bash
+git clone https://github.com/your-username/flowstate-ui.git
+cd flowstate-ui
 ```
 
----
+2. **Install dependencies**
+```bash
+npm install
+```
 
-## 📘 AI Reference Notes (for Claude Code / Codex)
+3. **Set up AI API key**
+Create a `.env` file in the root directory:
+```
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-* Always use **whole-script replacement** when editing via MCP server.
-* Core modules to reference:
+4. **Start development server**
+```bash
+npm run electron:dev
+```
 
-  * `mcp__RobloxStudio__run_code` (for test logic placeholder)
-  * `monitoring` (for checking active window titles)
-  * `aiClassifier` (for GPT-based relevance checks)
-* Respect local caching (`tasks.json`, `prefs.json`) before hitting APIs.
-* Use **incremental commits**; summarize logic changes clearly in commit message.
-* Avoid modifying overlay visuals — they’re handled externally.
-
----
-
-## 🔧 Current Technical Implementation
-
-### **Frontend Architecture**
-- **React 18** with TypeScript and functional components
-- **Tailwind CSS** with custom design system (mint, indigo, peach, sky, lavender colors)
-- **Radix UI** components for accessible UI primitives
-- **React Router** for navigation and settings page
-- **Custom Context** for theme management (light/dark mode)
-- **Lucide React** for consistent iconography
-
-### **Key Components**
-- **TaskCard**: Individual task display with toggle functionality
-- **FocusTimer**: Circular progress timer with duration selection and validation
-- **UserDropdown**: Animated dropdown with account/settings navigation
-- **TaskAlertPopup**: Smart validation popup for timer start requirements
-- **Settings Page**: Full preferences interface with whitelist/blacklist management
-
-### **State Management**
-- **React Hooks**: useState, useEffect, useRef for component state
-- **Task State**: Array of task objects with id, title, tag, color, enabled properties
-- **Timer State**: Duration, time remaining, active status, custom input
-- **Theme State**: Global theme context with smooth transitions
-
-### **Styling System**
-- **Non-Selectable Text**: Global user-select: none with input exceptions
-- **Responsive Design**: Mobile-first breakpoints (sm, md, lg, xl)
-- **Custom Gradients**: Dynamic sphere gradients that sync with theme
-- **Smooth Animations**: CSS transitions for hover states and theme changes
-- **Shadow System**: Soft shadows with theme-aware colors
-
-### **Electron Integration**
-- **Window Configuration**: Custom title ("FlowState") and icon
-- **Build System**: Electron Builder with cross-platform support
-- **Monitoring System**: Active window detection via active-win module
-- **Overlay System**: Fullscreen blocking window with dismissal options
-
-### **AI System**
-- **Gemini API**: AI-based productivity analysis with caching
-- **Multi-Task Support**: Considers all enabled tasks in blocking decisions
-- **Smart Caching**: Reduces API calls by caching productive/unproductive decisions
-- **System Window Filtering**: Skips system windows to reduce noise
+**Note:** Requires port 8080 for Vite dev server. Make sure port 8080 is not in use before starting.
 
 ---
 
-## 🧩 Future Considerations
+## 🎯 Usage
 
-* Cross-platform support (Mac/Linux)
-* Browser extension for Chrome/Edge integration
-* Mobile companion app (for notification blocking)
-* AI summarization of weekly productivity
-* Cloud analytics dashboard
+### Basic Usage
+
+1. **Set Your Goal**
+   - Enter what you want to accomplish in the goal input
+   - Enable multiple goals if needed
+
+2. **Configure Blocking**
+   - Go to Settings → Lists to manage whitelist/blacklist
+   - Choose your preferred AI sensitivity level
+   - Add specific apps/websites to block or allow
+
+3. **Start Focusing**
+   - Click "Start Focusing" to activate monitoring
+   - FlowState will minimize and begin monitoring
+   - AI will intelligently block distractions
+
+4. **During Sessions**
+   - If something is blocked, you can "Mark as Productive" to whitelist it
+   - Check recent blocks in the session stats
+   - Stay focused and let AI handle the distractions
+
+### AI Sensitivity Levels
+
+- **Strict**: Blocks everything except directly productive activities
+- **Balanced**: Allows common productivity tools and research materials
+- **Lenient**: Only blocks obvious distractions and entertainment
+
+### Configuration
+
+**Whitelist/Blacklist Patterns**
+- Use `|` to match multiple patterns: `notion|notes`
+- Case-insensitive matching
+- Checks window titles, app names, and URLs
+
+**AI Settings**
+- Adjust sensitivity levels in Settings
+- Configure cache duration for AI decisions
+- Choose between different blocking priorities
 
 ---
 
-## 🧠 Vision
+## 🏗️ Architecture
 
-> *“FlowState is the AI that guards your focus — silently, intelligently, and on your side.”*
+### Three-Process Architecture
 
+1. **Main Process** (`electron.cjs`)
+   - Manages app lifecycle and window creation
+   - Handles IPC communication between renderer and monitoring
+   - Controls monitoring start/stop and passes lists to service
 
+2. **React Renderer** (`src/`)
+   - UI built with React 18 + TypeScript + Tailwind CSS
+   - Context-based state management (Theme, Monitoring, Lists)
+   - Responsive design with mobile-first approach
+
+3. **Monitoring Service** (`monitoring-service.cjs`)
+   - Polls active window every 1 second using `get-windows`
+   - Implements priority-based checking system
+   - AI-powered productivity analysis with caching
+   - Spawns blocking overlay as needed
+
+### Blocking Decision Priority
+
+1. **FlowState itself** → Always whitelisted
+2. **User Blocklist** → Always blocked (no AI call)
+3. **User Whitelist** → Always allowed (no AI call)
+4. **"Mark as Productive" cache** → Temporary whitelist
+5. **AI Productivity Check** → Gemini API with caching
+
+---
+
+## 🧪 Development
+
+### Available Scripts
+
+```bash
+# Development
+npm run dev              # Start Vite dev server only (port 8080)
+npm run electron:dev     # Start Electron app with hot reload
+npm run electron:pack    # Build and package distributable
+npm run electron:dist    # Build without publishing
+
+# Code Quality
+npm run lint             # Run ESLint
+npm run build            # Build React app for production
+
+# Legacy Scripts (for development)
+npm run productivity     # Test AI productivity classifier
+npm run productivity:enhanced  # Enhanced AI classifier test
+```
+
+### Project Structure
+
+```
+flowstate-ui/
+├── src/                    # React frontend
+│   ├── pages/             # Route pages (Index, Settings, Lists, Stats)
+│   ├── components/        # Reusable UI components
+│   ├── contexts/          # React contexts (Theme, Monitoring, Lists)
+│   └── types/             # TypeScript interfaces
+├── overlay/                # Blocking overlay system
+├── public/                 # Static assets
+├── electron.cjs           # Main process entry point
+├── monitoring-service.cjs # AI monitoring logic
+├── preload.cjs            # IPC bridge for main window
+└── dist/                  # Vite build output
+```
+
+### Key Files
+
+- **`monitoring-service.cjs`** - Core AI monitoring and blocking logic
+- **`src/contexts/MonitoringContext.tsx`** - React bridge for monitoring state
+- **`src/pages/Lists.tsx`** - Whitelist/blacklist management UI
+- **`overlay/main.cjs`** - Blocking overlay electron process
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes** following the existing code patterns
+4. **Run tests**: `npm run lint` and `npm run electron:dev`
+5. **Commit your changes**: `git commit -m 'Add amazing feature'`
+6. **Push to branch**: `git push origin feature/amazing-feature`
+7. **Open a Pull Request**
+
+### Development Guidelines
+
+- Use TypeScript for all new code
+- Follow existing component patterns and naming conventions
+- Test with the AI monitoring system before submitting
+- Maintain consistent styling with Tailwind CSS
+- Update documentation as needed
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google Gemini API** - For providing the AI intelligence behind productivity analysis
+- **Electron Community** - For the amazing desktop app framework
+- **Radix UI** - For accessible and beautiful UI components
+- **Vite** - For fast development and build tooling
+
+---
+
+## 📞 Support
+
+- **Issues**: Open an issue on GitHub for bugs or feature requests
+- **Discussions**: Use GitHub Discussions for questions and ideas
+- **Documentation**: Check the inline code comments and this README
+
+---
+
+> *"FlowState is your AI companion for deep work - helping you achieve flow state through intelligent distraction management."*

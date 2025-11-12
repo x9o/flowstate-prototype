@@ -1,0 +1,26 @@
+{
+  "blockedDomains": [
+    "facebook.com",
+    "www.facebook.com",
+    "twitter.com",
+    "www.twitter.com",
+    "instagram.com",
+    "www.instagram.com",
+    "youtube.com",
+    "www.youtube.com",
+    "reddit.com",
+    "www.reddit.com",
+    "tiktok.com",
+    "www.tiktok.com",
+    "netflix.com",
+    "www.netflix.com",
+    "discord.com",
+    "www.discord.com"
+  ],
+  "settings": {
+    "port": 9999,
+    "upstreamDNS": "8.8.8.8",
+    "blockResponse": "0.0.0.0",
+    "logLevel": "info"
+  }
+}
