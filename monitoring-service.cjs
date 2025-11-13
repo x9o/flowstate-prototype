@@ -381,7 +381,7 @@ async function checkWhitelistAndCache(goal, enhancedInfo, __dirname) {
 /**
  * Show blocking overlay
  */
-async function showBlockingOverlay(goal, windowInfo, __dirname, blockReason = 'ai') {
+async function showBlockingOverlay(goal, windowInfo, __dirname, blockReason = 'ai', blockingMode = 'gentle') {
   return new Promise((resolve) => {
     const overlayPath = join(__dirname, 'overlay', 'main.cjs');
     const electronPath = process.execPath;
@@ -397,6 +397,13 @@ async function showBlockingOverlay(goal, windowInfo, __dirname, blockReason = 'a
         BLOCK_CATEGORY: windowInfo.appCategory || 'Unknown',
         BLOCK_URL: windowInfo.url || '',
         BLOCK_REASON: blockReason,
+        BLOCK_MODE: blockingMode,
+        BLOCK_WINDOW_INFO_JSON: JSON.stringify({
+          title: windowInfo.title,
+          app: windowInfo.owner.name,
+          url: windowInfo.url || '',
+          path: windowInfo.owner.path || ''
+        }),
         BLOCK_STATS_JSON: JSON.stringify({
           blocksStopped: sessionStats.blockedAttempts,
           sessionStartTime: sessionStats.sessionStartTime,
@@ -419,6 +426,97 @@ async function showBlockingOverlay(goal, windowInfo, __dirname, blockReason = 'a
       resolve();
     });
   });
+}
+
+/**
+ * Manage blocked process (minimize or kill based on blocking mode)
+ */
+async function manageBlockedProcess(windowInfo, blockingMode) {
+  const { exec } = require('child_process');
+  const util = require('util');
+  const execPromise = util.promisify(exec);
+
+  if (blockingMode === 'hard') {
+    // Hard mode: Kill the process
+    try {
+      const appName = windowInfo.owner.name;
+      console.log(`💀 Hard Mode: Terminating ${appName}...`);
+
+      if (process.platform === 'win32') {
+        // Windows: Use taskkill to terminate process
+        await execPromise(`taskkill /im "${appName}" /t /f`);
+        console.log(`✅ Terminated ${appName} and its child processes`);
+      } else if (process.platform === 'darwin' || process.platform === 'linux') {
+        // macOS/Linux: Use killall
+        await execPromise(`killall "${appName}"`);
+        console.log(`✅ Killed ${appName}`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to kill process: ${error.message}`);
+    }
+  } else if (blockingMode === 'gentle') {
+    // Gentle mode: Minimize the window
+    try {
+      console.log(`📉 Gentle Mode: Minimizing ${windowInfo.owner.name}...`);
+
+      if (process.platform === 'win32') {
+        // Windows: Write PowerShell script to temp file and execute it
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const tempDir = os.tmpdir();
+        const scriptPath = path.join(tempDir, `minimize_${Date.now()}.ps1`);
+
+        const windowTitle = windowInfo.title.replace(/'/g, "''"); // Escape single quotes for PowerShell
+
+        const psScript = `
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public class Window {
+  [DllImport("user32.dll")]
+  [return: MarshalAs(UnmanagedType.Bool)]
+  public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+  [DllImport("user32.dll", SetLastError = true)]
+  public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+}
+'@
+
+$hwnd = [Window]::FindWindow($null, '${windowTitle}')
+if ($hwnd -ne [IntPtr]::Zero) {
+  [Window]::ShowWindow($hwnd, 6) | Out-Null
+  Write-Host "Window minimized"
+} else {
+  Write-Host "Window not found"
+}
+`;
+
+        // Write script to file
+        fs.writeFileSync(scriptPath, psScript, 'utf8');
+
+        try {
+          // Execute the script
+          await execPromise(`powershell -ExecutionPolicy Bypass -File "${scriptPath}"`);
+          console.log(`✅ Minimized window: ${windowInfo.title}`);
+        } finally {
+          // Clean up temp file
+          try {
+            fs.unlinkSync(scriptPath);
+          } catch (cleanupError) {
+            console.log(`Note: Could not delete temp script: ${cleanupError.message}`);
+          }
+        }
+      } else if (process.platform === 'darwin') {
+        // macOS: Use osascript to minimize
+        const appName = windowInfo.owner.name;
+        await execPromise(`osascript -e 'tell application "System Events" to tell process "${appName}" to set visible to false'`);
+        console.log(`✅ Hid ${appName}`);
+      }
+    } catch (error) {
+      console.error(`⚠️ Failed to minimize window: ${error.message}`);
+    }
+  }
 }
 
 /**
@@ -461,14 +559,14 @@ function checkLists(windowTitle, appName, url, whitelist, blocklist) {
 /**
  * Main monitoring loop
  */
-async function startMonitoring(goals, duration, sendToRenderer, __dirname, whitelist = [], blocklist = [], strictnessLevel = 'balanced') {
+async function startMonitoring(goals, duration, sendToRenderer, __dirname, whitelist = [], blocklist = [], strictnessLevel = 'balanced', blockingMode = 'gentle') {
   const goal = goals[0]; // Use first goal
   sessionStats.sessionStartTime = Date.now();
 
   // Set the strictness level for this session
   currentStrictnessLevel = strictnessLevel;
 
-  console.log(`🎯 Monitoring started: "${goal}" (${strictnessLevel} mode)`);
+  console.log(`🎯 Monitoring started: "${goal}" (${strictnessLevel} mode, ${blockingMode} blocking)`);
 
   // Start periodic stats updates to renderer (every 5 seconds)
   if (sendToRenderer) {
@@ -523,7 +621,10 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
                 });
               }
 
-              await showBlockingOverlay(goal, currentWindow, __dirname, 'blocklist');
+              // Manage blocked process (minimize or kill based on mode)
+              await manageBlockedProcess(currentWindow, blockingMode);
+
+              await showBlockingOverlay(goal, currentWindow, __dirname, 'blocklist', blockingMode);
             } else if (listCheck.type === 'whitelisted') {
               console.log(`📋 ${currentWindow.title} - WHITELIST: YES`);
               updateStats(enhancedInfo, true);
@@ -548,7 +649,10 @@ async function startMonitoring(goals, duration, sendToRenderer, __dirname, white
                     });
                   }
 
-                  await showBlockingOverlay(goal, currentWindow, __dirname, 'ai');
+                  // Manage blocked process (minimize or kill based on mode)
+                  await manageBlockedProcess(currentWindow, blockingMode);
+
+                  await showBlockingOverlay(goal, currentWindow, __dirname, 'ai', blockingMode);
                 }
               }
             }

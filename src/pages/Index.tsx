@@ -17,6 +17,7 @@ import { taskValidationService } from "@/services/TaskValidationService";
 import { quotes } from '@/data/quotes';
 import { NotificationSelector, NotificationTrigger } from "@/components/NotificationSelector";
 import { StrictnessSelector, StrictnessTrigger } from "@/components/StrictnessSelector";
+import { BlockingModeSelector, BlockingModeTrigger } from "@/components/BlockingModeSelector";
 import { TimeSelectorModal, TimeTrigger } from "@/components/TimeSelectorModal";
 import { RecentTasksModal } from "@/components/RecentTasksModal";
 import { SessionStatsModal } from "@/components/SessionStatsModal";
@@ -194,7 +195,7 @@ const Index = () => {
   const { toggleSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
   const [currentGoal, setCurrentGoal] = useState("");
-  const { startMonitoring, stopMonitoring, pauseMonitoring, resumeMonitoring, monitoringState, isPaused, recentBlockedApps, strictnessLevel, setStrictnessLevel } = useMonitoring();
+  const { startMonitoring, stopMonitoring, pauseMonitoring, resumeMonitoring, monitoringState, isPaused, recentBlockedApps, strictnessLevel, setStrictnessLevel, blockingMode, setBlockingMode } = useMonitoring();
   const { whitelist, blocklist } = useLists();
   const { addRecentTask } = useRecentTasks();
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -226,6 +227,7 @@ const Index = () => {
   const [quoteIndex, setQuoteIndex] = useState(Math.floor(Math.random() * quotes.length));
   const [tipIndex, setTipIndex] = useState(0);
   const [isStrictnessSelectorOpen, setIsStrictnessSelectorOpen] = useState(false);
+  const [isBlockingModeSelectorOpen, setIsBlockingModeSelectorOpen] = useState(false);
   const [isRecentTasksModalOpen, setIsRecentTasksModalOpen] = useState(false);
   const [isNotificationSelectorOpen, setIsNotificationSelectorOpen] = useState(false);
   const [notificationInterval, setNotificationInterval] = useState<'off' | '10min' | '20min' | '30min' | '1hr'>('off');
@@ -416,7 +418,7 @@ const Index = () => {
       console.log('📋 Whitelist items being passed:', whitelist.map(item => ({ name: item.name, pattern: item.pattern })));
       console.log('🚫 Blocklist items being passed:', blocklist.map(item => ({ name: item.name, pattern: item.pattern })));
 
-      await startMonitoring([task], sessionDuration || 25, whitelist, blocklist);
+      await startMonitoring([task], sessionDuration || 25, whitelist, blocklist, blockingMode);
       setIsMonitoring(true);
       setCurrentGoal("");
     } catch (error) {
@@ -863,6 +865,10 @@ const Index = () => {
                         isActive={notificationInterval !== 'off'}
                       />
                       <StrictnessTrigger onClick={() => setIsStrictnessSelectorOpen(true)} />
+                      <BlockingModeTrigger
+                        onClick={() => setIsBlockingModeSelectorOpen(true)}
+                        currentMode={blockingMode}
+                      />
                     </div>
 
                     <input
@@ -875,7 +881,7 @@ const Index = () => {
                         }
                       }}
                       placeholder={placeholderText || "What are you working on?"}
-                      className={`w-full h-16 pl-40 pr-20 text-lg rounded-2xl border-2 transition-all relative z-0 ${
+                      className={`w-full h-16 pl-48 pr-20 text-lg rounded-2xl border-2 transition-all relative z-0 ${
                         theme === 'dark'
                           ? 'bg-muted/50 border-border focus:border-mint backdrop-blur-sm'
                           : 'bg-white/80 border-gray-300 focus:border-mint backdrop-blur-sm'
@@ -991,6 +997,14 @@ const Index = () => {
         onLevelChange={setStrictnessLevel}
         isOpen={isStrictnessSelectorOpen}
         onOpenChange={setIsStrictnessSelectorOpen}
+      />
+
+      {/* Blocking Mode Selector Dialog */}
+      <BlockingModeSelector
+        currentMode={blockingMode}
+        onModeChange={setBlockingMode}
+        isOpen={isBlockingModeSelectorOpen}
+        onOpenChange={setIsBlockingModeSelectorOpen}
       />
 
       {/* Notification Selector Dialog */}

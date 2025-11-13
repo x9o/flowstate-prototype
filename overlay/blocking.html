@@ -503,23 +503,23 @@
         Back to Work
       </button>
 
-      <button class="button button-secondary" id="whitelistBtn" onclick="markAsProductive()">
-        <span id="whitelistBtnText">This IS Productive</span>
+      <button class="button button-secondary" id="whitelistBtn" onclick="markAsProductive()" disabled>
+        <span id="whitelistBtnText">Please wait <span id="whitelistCountdown">10</span>s...</span>
       </button>
     </div>
 
     <div class="button-container" id="websiteButtons" style="display: none;">
-      <button class="button button-small button-secondary" onclick="markPageAsProductive()">
-        Mark this page as productive
+      <button class="button button-small button-secondary" id="pageWhitelistBtn" onclick="markPageAsProductive()" disabled>
+        <span id="pageWhitelistText">Please wait <span id="pageCountdown">10</span>s...</span>
       </button>
-      <button class="button button-small button-secondary" onclick="markDomainAsProductive()">
-        Mark <span id="domainName">domain</span> as productive
+      <button class="button button-small button-secondary" id="domainWhitelistBtn" onclick="markDomainAsProductive()" disabled>
+        <span id="domainWhitelistText">Please wait <span id="domainCountdown">10</span>s...</span>
       </button>
     </div>
 
     <div class="button-container" id="appButton" style="display: none;">
-      <button class="button button-small button-secondary" onclick="markAppAsProductive()">
-        Set <span id="appName">Discord</span> as Productive
+      <button class="button button-small button-secondary" id="appWhitelistBtn" onclick="markAppAsProductive()" disabled>
+        <span id="appWhitelistText">Please wait <span id="appCountdown">10</span>s...</span>
       </button>
     </div>
   </div>
@@ -534,6 +534,35 @@
     let currentDomain = null;
     let currentUrl = null;
     let currentApp = null;
+
+    // Productive button cooldown configuration
+    // Read from localStorage, default to 10 seconds (range: 5-30)
+    let PRODUCTIVE_COOLDOWN_SECONDS = 10;
+    try {
+      const stored = localStorage.getItem('flowstate_bypass_cooldown_duration');
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (parsed >= 5 && parsed <= 30) {
+          PRODUCTIVE_COOLDOWN_SECONDS = parsed;
+        }
+      }
+    } catch (e) {
+      console.log('Could not read cooldown setting, using default:', e);
+    }
+
+    let productiveCountdowns = {
+      general: PRODUCTIVE_COOLDOWN_SECONDS,
+      page: PRODUCTIVE_COOLDOWN_SECONDS,
+      domain: PRODUCTIVE_COOLDOWN_SECONDS,
+      app: PRODUCTIVE_COOLDOWN_SECONDS
+    };
+    let productiveIntervals = {};
+    let productiveAllowed = {
+      general: false,
+      page: false,
+      domain: false,
+      app: false
+    };
 
     // Randomized messages
     const statusMessages = [
@@ -749,24 +778,40 @@
     // Mark as productive function (for apps)
     function markAsProductive() {
       console.log('Mark as Productive button clicked (general)');
+      if (!productiveAllowed.general) {
+        console.log('Productive marking blocked - cooldown still active');
+        return;
+      }
       markProductiveAndClose('general', activity);
     }
 
     // Mark app as productive function (for specific apps)
     function markAppAsProductive() {
       console.log('Mark app as productive button clicked');
+      if (!productiveAllowed.app) {
+        console.log('App productive marking blocked - cooldown still active');
+        return;
+      }
       markProductiveAndClose('app', currentApp);
     }
 
     // Mark page as productive function (for specific URLs)
     function markPageAsProductive() {
       console.log('Mark page as productive button clicked');
+      if (!productiveAllowed.page) {
+        console.log('Page productive marking blocked - cooldown still active');
+        return;
+      }
       markProductiveAndClose('page', currentUrl);
     }
 
     // Mark domain as productive function (for entire domains)
     function markDomainAsProductive() {
       console.log('Mark domain as productive button clicked');
+      if (!productiveAllowed.domain) {
+        console.log('Domain productive marking blocked - cooldown still active');
+        return;
+      }
       markProductiveAndClose('domain', currentDomain);
     }
 
@@ -834,6 +879,42 @@
       console.log(`"${targetText}" marked as productive (${type})`);
     }
 
+    // Start countdown timers for productive buttons
+    function startProductiveCountdowns() {
+      // Helper function to start countdown for a specific button
+      function startCountdown(type, btnId, textId, countdownId, labelWhenReady) {
+        const btn = document.getElementById(btnId);
+        const textEl = document.getElementById(textId);
+        const countdownEl = document.getElementById(countdownId);
+
+        if (!btn || !textEl || !countdownEl) return; // Button not visible
+
+        productiveIntervals[type] = setInterval(() => {
+          productiveCountdowns[type]--;
+          countdownEl.textContent = productiveCountdowns[type];
+
+          if (productiveCountdowns[type] <= 0) {
+            clearInterval(productiveIntervals[type]);
+            productiveAllowed[type] = true;
+            btn.disabled = false;
+            textEl.textContent = labelWhenReady;
+            btn.classList.add('success-animation');
+            console.log(`${type} productive button now enabled`);
+          }
+        }, 1000);
+      }
+
+      // Start countdown for general button (always visible)
+      startCountdown('general', 'whitelistBtn', 'whitelistBtnText', 'whitelistCountdown', 'This IS Productive');
+
+      // Start countdown for website buttons (if visible)
+      startCountdown('page', 'pageWhitelistBtn', 'pageWhitelistText', 'pageCountdown', 'Mark this page as productive');
+      startCountdown('domain', 'domainWhitelistBtn', 'domainWhitelistText', 'domainCountdown', `Mark ${currentDomain || 'this website'} as productive`);
+
+      // Start countdown for app button (if visible)
+      startCountdown('app', 'appWhitelistBtn', 'appWhitelistText', 'appCountdown', `Set ${currentApp || 'app'} as Productive`);
+    }
+
     // Dismiss overlay function (Back to Work)
     function dismissOverlay() {
       console.log('Back to Work button clicked');
@@ -876,6 +957,10 @@
         e.preventDefault();
         dismissOverlay();
       });
+
+      // Start productive button countdowns
+      startProductiveCountdowns();
+      console.log('Started productive button countdowns');
     });
 
     // Debug: log page load state

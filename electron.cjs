@@ -155,7 +155,7 @@ ipcMain.handle('get-theme', () => {
 });
 
 // Monitoring IPC handlers
-ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blocklist, strictnessLevel = 'balanced') => {
+ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blocklist, strictnessLevel = 'balanced', blockingMode = 'gentle') => {
   try {
     if (monitoringInstance) {
       console.log('Monitoring already active, stopping previous instance');
@@ -167,6 +167,7 @@ ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blo
     console.log('Whitelist:', whitelist?.length || 0, 'items');
     console.log('Blocklist:', blocklist?.length || 0, 'items');
     console.log('Strictness Level:', strictnessLevel);
+    console.log('Blocking Mode:', blockingMode);
 
     // Update monitoring state
     monitoringState.isActive = true;
@@ -191,7 +192,8 @@ ipcMain.handle('start-monitoring', async (event, goals, duration, whitelist, blo
       __dirname,
       whitelist || [],
       blocklist || [],
-      strictnessLevel
+      strictnessLevel,
+      blockingMode
     );
 
     // Minimize the FlowState window

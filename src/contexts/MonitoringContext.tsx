@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { MonitoringState, WindowInfo, ActivityBlockedEvent, MonitoringErrorEvent } from '../types/monitoring';
+import { MonitoringState, WindowInfo, ActivityBlockedEvent, MonitoringErrorEvent, BlockingMode } from '../types/monitoring';
 
 interface ListItem {
   id: string;
@@ -21,7 +21,9 @@ interface MonitoringContextType {
   recentBlockedApps: BlockedApp[];
   strictnessLevel: 'lenient' | 'balanced' | 'strict';
   setStrictnessLevel: (level: 'lenient' | 'balanced' | 'strict') => void;
-  startMonitoring: (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]) => Promise<void>;
+  blockingMode: BlockingMode;
+  setBlockingMode: (mode: BlockingMode) => void;
+  startMonitoring: (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[], blockingMode?: BlockingMode) => Promise<void>;
   pauseMonitoring: () => Promise<void>;
   resumeMonitoring: () => Promise<void>;
   stopMonitoring: () => Promise<void>;
@@ -51,15 +53,18 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
   const [isPaused, setIsPaused] = useState(false);
   const [recentBlockedApps, setRecentBlockedApps] = useState<BlockedApp[]>([]);
   const [strictnessLevel, setStrictnessLevel] = useState<'lenient' | 'balanced' | 'strict'>('balanced');
+  const [blockingMode, setBlockingMode] = useState<BlockingMode>('gentle');
 
   // Start monitoring session
-  const startMonitoring = async (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[]): Promise<void> => {
+  const startMonitoring = async (goals: string[], duration: number, whitelist?: ListItem[], blocklist?: ListItem[], blockingModeParam?: BlockingMode): Promise<void> => {
     try {
+      const effectiveBlockingMode = blockingModeParam || blockingMode;
       console.log('🔗 MonitoringContext.startMonitoring called with:', {
         goals,
         duration,
         whitelistLength: whitelist?.length || 0,
         blocklistLength: blocklist?.length || 0,
+        blockingMode: effectiveBlockingMode,
         whitelistItems: whitelist?.map(item => ({ name: item.name, pattern: item.pattern })) || [],
         blocklistItems: blocklist?.map(item => ({ name: item.name, pattern: item.pattern })) || []
       });
@@ -67,7 +72,7 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
       // Clear recent blocked apps when starting a new session
       setRecentBlockedApps([]);
 
-      const result = await window.electronAPI.startMonitoring(goals, duration, whitelist, blocklist, strictnessLevel);
+      const result = await window.electronAPI.startMonitoring(goals, duration, whitelist, blocklist, strictnessLevel, effectiveBlockingMode);
       if (!result.success) {
         throw new Error(result.error || 'Failed to start monitoring');
       }
@@ -207,6 +212,8 @@ export const MonitoringProvider: React.FC<MonitoringProviderProps> = ({ children
     recentBlockedApps,
     strictnessLevel,
     setStrictnessLevel,
+    blockingMode,
+    setBlockingMode,
     startMonitoring,
     pauseMonitoring,
     resumeMonitoring,

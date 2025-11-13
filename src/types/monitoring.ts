@@ -53,3 +53,5 @@ export interface ActivityBlockedEvent {
 export interface MonitoringErrorEvent {
   error: string;
 }
+
+export type BlockingMode = 'gentle' | 'hard';

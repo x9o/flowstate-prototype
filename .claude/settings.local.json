@@ -9,7 +9,8 @@
       "Bash(cmd /c \"taskkill /F /PID 5208\")",
       "Bash(powershell:*)",
       "Bash(npm install:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
