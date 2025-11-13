@@ -245,49 +245,6 @@ flowstate-ui/
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! Here's how to get started:
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** following the existing code patterns
-4. **Run tests**: `npm run lint` and `npm run electron:dev`
-5. **Commit your changes**: `git commit -m 'Add amazing feature'`
-6. **Push to branch**: `git push origin feature/amazing-feature`
-7. **Open a Pull Request**
-
-### Development Guidelines
-
-- Use TypeScript for all new code
-- Follow existing component patterns and naming conventions
-- Test with the AI monitoring system before submitting
-- Maintain consistent styling with Tailwind CSS
-- Update documentation as needed
-
----
-
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **Google Gemini API** - For providing the AI intelligence behind productivity analysis
-- **Electron Community** - For the amazing desktop app framework
-- **Radix UI** - For accessible and beautiful UI components
-- **Vite** - For fast development and build tooling
-
----
-
-## 📞 Support
-
-- **Issues**: Open an issue on GitHub for bugs or feature requests
-- **Discussions**: Use GitHub Discussions for questions and ideas
-- **Documentation**: Check the inline code comments and this README
-
----
-
-> *"FlowState is your AI companion for deep work - helping you achieve flow state through intelligent distraction management."*
