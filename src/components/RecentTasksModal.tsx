@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Clock, Target, Trash2, Search, Filter, TrendingUp, Calendar, Tag } from 'lucide-react';
+import { X, Play, Clock, Target, Trash2, Search, Filter, TrendingUp, Calendar, Tag, Plus } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRecentTasks, formatTimeAgo, formatEstimatedTime, RecentTask } from '@/contexts/RecentTasksContext';
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,11 @@ const taskColors = {
 
 export function RecentTasksModal({ isOpen, onClose, onTaskSelect }: RecentTasksModalProps) {
   const { theme } = useTheme();
-  const { recentTasks, removeRecentTask, clearRecentTasks } = useRecentTasks();
+  const { recentTasks, removeRecentTask, clearRecentTasks, addRecentTask } = useRecentTasks();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'usage' | 'time'>('recent');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [selectedColor, setSelectedColor] = useState<'mint' | 'indigo' | 'peach' | 'sky' | 'lavender'>('mint');
 
   // Filter and sort tasks
   const filteredTasks = recentTasks
@@ -48,6 +50,21 @@ export function RecentTasksModal({ isOpen, onClose, onTaskSelect }: RecentTasksM
     onTaskSelect(task);
     onClose();
   };
+
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (newTaskTitle.trim()) {
+      addRecentTask({
+        title: newTaskTitle.trim(),
+        color: selectedColor
+      });
+      setNewTaskTitle('');
+      setSelectedColor('mint');
+    }
+  };
+
+  const colorOptions: Array<'mint' | 'indigo' | 'peach' | 'sky' | 'lavender'> = ['mint', 'indigo', 'peach', 'sky', 'lavender'];
 
   if (!isOpen) return null;
 
@@ -136,6 +153,64 @@ export function RecentTasksModal({ isOpen, onClose, onTaskSelect }: RecentTasksM
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Add New Task Section */}
+          <div className={`p-4 border-b ${
+            theme === 'dark' ? 'border-border bg-muted/30' : 'border-gray-200 bg-gray-50'
+          }`}>
+            <form onSubmit={handleAddTask} className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Plus className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Add Quick Task</h3>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter task title..."
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  className={`flex-1 px-3 py-2 rounded-lg border ${
+                    theme === 'dark'
+                      ? 'bg-background border-border focus:border-mint'
+                      : 'bg-white border-gray-200 focus:border-mint'
+                  } focus:outline-none focus:ring-2 focus:ring-mint/20`}
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!newTaskTitle.trim()}
+                  className="shrink-0"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Color:</span>
+                {colorOptions.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-6 h-6 rounded-full transition-all ${
+                      color === 'mint' ? 'bg-mint' :
+                      color === 'indigo' ? 'bg-indigo' :
+                      color === 'peach' ? 'bg-peach' :
+                      color === 'sky' ? 'bg-sky' :
+                      'bg-lavender'
+                    } ${
+                      selectedColor === color
+                        ? 'ring-2 ring-offset-2 ring-current scale-110'
+                        : 'opacity-50 hover:opacity-100'
+                    }`}
+                    title={color}
+                  />
+                ))}
+              </div>
+            </form>
           </div>
 
           {/* Task List */}
