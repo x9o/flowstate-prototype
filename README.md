@@ -6,17 +6,17 @@ Unlike traditional blockers, FlowState understands user **intent** and dynamical
 
 ---
 
-## 🚀 Current Status
+## Current Status
 
 **Development Stage:** Advanced Prototype
 **Version:** v0.1 (MVP)
 **License:** Open Source (MIT)
 **Platform:** Electron (Cross-platform)
-**State:** ✅ Core monitoring & AI blocking system implemented
+**State:** Core monitoring & AI blocking system implemented
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-------------|
@@ -30,7 +30,7 @@ Unlike traditional blockers, FlowState understands user **intent** and dynamical
 
 ---
 
-## 🧩 Core Concept
+## Core Concept
 
 FlowState helps users enter and maintain a **"flow state"**, a period of deep focus where distractions are intelligently managed.
 
@@ -42,9 +42,9 @@ FlowState helps users enter and maintain a **"flow state"**, a period of deep fo
 
 ---
 
-## 🧠 Key Features
+## Key Features
 
-### ✅ **Currently Implemented**
+### **Currently Implemented**
 
 **AI-Powered Monitoring**
 - Real-time active window detection
@@ -70,7 +70,7 @@ FlowState helps users enter and maintain a **"flow state"**, a period of deep fo
 - Blocking overlay with "Mark as Productive" functionality
 - Session statistics and recent blocks tracking
 
-### 🚧 **Planned Features**
+### **Planned Features**
 
 **Enhanced Blocking Methods**
 - DNS-level blocking (concept proven)
@@ -92,7 +92,7 @@ FlowState helps users enter and maintain a **"flow state"**, a period of deep fo
 
 ---
 
-## 🛠️ Installation
+## Installation
 
 ### Prerequisites
 - Node.js 18+ installed
@@ -126,7 +126,7 @@ npm run electron:dev
 
 ---
 
-## 🎯 Usage
+## Usage
 
 ### Basic Usage
 
@@ -169,7 +169,7 @@ npm run electron:dev
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Three-Process Architecture
 
@@ -199,7 +199,7 @@ npm run electron:dev
 
 ---
 
-## 🧪 Development
+## Development
 
 ### Available Scripts
 
