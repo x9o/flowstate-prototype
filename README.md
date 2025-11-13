@@ -1,4 +1,4 @@
-# FlowState — AI-Powered Focus & Productivity
+# FlowState
 
 FlowState is an **open-source desktop productivity app** built with **Electron + React**, designed to help users achieve deep focus through **AI-powered monitoring, task management, and intelligent distraction blocking**.
 
@@ -32,7 +32,7 @@ Unlike traditional blockers, FlowState understands user **intent** and dynamical
 
 ## 🧩 Core Concept
 
-FlowState helps users enter and maintain a **"flow state"** — a period of deep focus where distractions are intelligently managed.
+FlowState helps users enter and maintain a **"flow state"**, a period of deep focus where distractions are intelligently managed.
 
 **Core Loop:**
 1. **Set your goal** - Define what you want to accomplish
