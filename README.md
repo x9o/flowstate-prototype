@@ -102,7 +102,7 @@ FlowState helps users enter and maintain a **"flow state"**, a period of deep fo
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/your-username/flowstate-ui.git
+git clone https://github.com/x9o/flowstate-prototype.git
 cd flowstate-ui
 ```
 
